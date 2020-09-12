@@ -1,0 +1,19 @@
+Dominio: DETECCION DE INUNDACIONES
+Objetivo: Inundacion = Si
+Base de Hechos final:
+	Mes = Octubre
+	Estacion = Humeda
+	Precipitaciones = Fuertes
+	Cambio = Subiendo
+	Profundidad = 8
+	Nivel = Alto
+	Prediccion = Tormenta
+	Lluvia = Fuerte
+	Inundacion = Si
+
+CAMINO HACIA EL OBJETIVO
+Como el atributo 'Precipitaciones' tiene el valor 'Fuertes' introducido por la Base de Hechos, el SBR concluye que 'Cambio' tiene el valor 'Subiendo'
+Como el atributo 'Profundidad' tiene el valor '8' introducido por la Base de Hechos, el SBR concluye que 'Nivel' tiene el valor 'Alto'
+Como el atributo 'Prediccion' tiene el valor 'Tormenta' introducido por la Base de Hechos, el SBR concluye que 'Lluvia' tiene el valor 'Fuerte'
+Como el atributo 'Cambio' tiene el valor 'Subiendo', y el atributo 'Nivel' tiene el valor 'Alto', y el atributo 'Lluvia' tiene el valor 'Fuerte', el SBR concluye que 'Inundacion' tiene el valor 'Si'
+El SBR ha concluido que 'Inundacion' es 'Si'

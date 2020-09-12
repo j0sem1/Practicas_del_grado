@@ -1,0 +1,2 @@
+Copiar el archivo SDL2.dll a la carpeta C:/Windows/SysWOW64
+Copiar los archivos libfreetype-6.dll, SDL2_ttf.dll, zlib1.dll a la carpeta C:/Windows/SysWOW64

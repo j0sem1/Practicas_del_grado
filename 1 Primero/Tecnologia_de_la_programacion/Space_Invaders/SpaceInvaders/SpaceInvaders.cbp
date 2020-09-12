@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="SpaceInvaders" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/SpaceInvaders" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/SpaceInvaders" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="Bala.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Bala.h" />
+		<Unit filename="Colision.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Colision.h" />
+		<Unit filename="Enemigo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Enemigo.h" />
+		<Unit filename="Enemigosybalas.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Enemigosybalas.h" />
+		<Unit filename="Main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Pantalla.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Pantalla.h" />
+		<Unit filename="Personaje.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Personaje.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,859 @@
+---
+title: "Clasificación de imágenes con redes neuronales"
+subtitle: Segunda práctica de Aprendizaje Computacional, Grado en Informática (UMU)
+author: "José Miguel Sánchez Almagro"
+date: "11/07/2020"
+output: 
+  html_document:
+    theme: spacelab
+    highlight: kate
+    df_print: paged
+    toc: true
+    toc_float: true
+    number_sections: true
+#bibliography: bibliography.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introducción
+
+Durante el desarrollo de este documento se trabajará con el conjunto de fotografías CIFAR-10.
+
+CIFAR-10 es un conjunto de imágenes disponible en internet <https://www.cs.toronto.edu/~kriz/cifar.html> que contiene 60000 imágenes de 32x32 píxeles. Cada imagen de dicho conjunto se clasifica según lo que haya en la fotografía, siendo 10 las posibles clasificaciones de cada fotografía. El conjunto está perfectamente equilibrado entre dichas clases, es decir, hay 6000 imágenes de cada clase.
+Las clases entre las que se clasifican las imágenes son:
+
+* Avión (airplane)
+* Automóvil (automobile)
+* Pájaro (bird)
+* Gato (cat)
+* Ciervo (deer)
+* Perro (dog)
+* Rana (frog)
+* Caballo (horse)
+* Barco (ship)
+* Camión (truck)
+
+
+En esta práctica se van a utilizar dos tecnologías de redes neuronales para el reconocimiento y clasificación de las imágenes que se encuentran en el paquete CIFAR nombrado anteriormente. La primera tecnología será la tradicional basada en un perceptrón multi-capa con no más de dos capas. La otra será una red de convolución.
+
+El objetivo es identificar qué tecnología es capaz de producir los mejores modelos de reconocimiento y clasificación de imágenes.
+
+
+
+
+# Datos
+
+Dado que las sesenta mil fotografías que contiene el conjunto original CIFAR-10 suponen un excesivo cómputo, se utilizará un conjunto reducido que solo contendrá diez mil imágenes.
+
+Cargamos dicho conjunto de imágenes desde dos archivos .csv.
+
+```{r}
+CIFAR10_10Kx = read.csv("CIFAR10_10Kx.csv")
+str(CIFAR10_10Kx)
+CIFAR10_10Ky = read.csv("CIFAR10_10Ky.csv")
+str(CIFAR10_10Ky)
+```
+
+En CIFAR10_10kx tendremos las diez mil imágenes y en CIFAR10_10Ky la clase a la que pertenece cada fotografía.
+
+
+
+## Distribución de las imágenes
+
+Sabíamos que los ejemplos del conjunto de imágenes CIFAR-10 estaban perfectamente distribuidos pero no sabemos si ocurre lo mismo con este conjunto. A continuación, vemos cuántas imágenes tiene cada clase:
+
+```{r, echo=FALSE}
+cnts <- tabulate(CIFAR10_10Ky$x) 
+names(cnts) <- 0:(length(cnts) - 1) 
+cnts  
+```
+
+No está perfectamente distribuido, pero casi, por lo que la muestra es perfectamente válida. A continuación, visualizamos la misma información en forma de gráfica.
+
+```{r, echo=FALSE}
+bp = barplot(rbind(table(CIFAR10_10Ky$x)), main="Distribución de imágenes por clase", ylab="Número de imágenes", xlab="Clases", col="purple")
+```
+
+
+
+## Conjuntos de training y test
+
+Por requisitos de la práctica se utilizará una estrategia hold-out 80-20 en la distribución de los datos. Esto es, el conjunto de diez mil imágenes se distribuirá aleatoriamente en dos conjuntos:
+
+* Conjunto de training. Contendrá el 80% de las imágenes, y se utilizará para el entrenamiento de los modelos
+
+* Conjunto de test. Contendrá el 20% de las imágenes, y se utilizará para la validación de los modelos
+
+
+Además, se crearán 10 divisiones, es decir, se crearán 10 conjuntos de training y 10 de test. Esto se realiza con el fin de no entrenar cada modelo una sola vez y tener unos resultados más realistas y diversos. Se entrenará entonces cada modelo 10 veces y se obtendrán 10 resultados distintos. El resultado final del modelo se obtendrá realizando una media de dichos 10 valores.
+
+```{r, echo=FALSE}
+nConj = 10
+```
+
+El conjunto que contiene las imágenes será el *x* y el que contiene la clasificación de las imágenes el *y*.
+
+
+Vamos a observar la dimensión de ambos conjuntos de datos:
+
+```{r}
+dim(CIFAR10_10Kx)
+dim(CIFAR10_10Ky)
+```
+
+El conjunto de imágenes tiene diez mil imágenes con 3073 variables.
+Siendo las imágenes de 32x32 píxeles, y teniendo cada píxel tres valores RGB, multiplicado tenemos 32 * 32 * 3 = 3072. Por lo tanto, cada variable representa un píxel en cada imagen, exceptuando la primera variable que indica el número de cada imagen.
+
+El conjunto de clasificación tiene a su vez diez mil valores con dos variables. Una variable indica a que imagen nos referimos, como en el caso anterior, y la otra variable indica la clasificación de la imagen.
+
+
+Una vez hemos entendido la distribución de los datos, hay que dividirlos en en diez conjuntos aleatoriamente. Para ello, utilizaremos la herramienta `createDataPartition` de la librería de **Caret** que ya utilizamos en la práctica anterior.
+
+```{r}
+# Cargamos la librería de caret, necesitada para la función createDataPartition.
+library(caret)
+# Cargamos la librería de keras para la función 'to_categorical'.
+library(keras)
+
+# Establecemos la semilla para obtener siempre las mismas divisiones.
+set.seed(1234)
+
+# Creamos una matriz con diez particiones de los datos.
+Particiones <- createDataPartition(CIFAR10_10Kx$X,
+                               p=0.8,              # Genera un 80% para train, 20% para test
+                               list = TRUE,        # Dame los resultados en una matriz
+                               times = nConj)      # Genera 10 particiones 80/20
+```
+
+
+Todas las imágenes y su correspondiente clasificación que se encuentran en las particiones de la matriz **Particiones** deben ser almacenadas en otra estructura, para utilizar las imágenes de una manera más cómoda y sencilla en las redes neuronales. Además, aprovecharemos para formatear la información en un formato que acepten dichas redes.
+
+Esto será almacenado en una lista llamada **datos**, que a su vez contendrá dos listas: una para datos de training y otra para test. Ambas listas tendrán su correspondiente división en *x* e *y*.
+
+```{r}
+# Eliminamos la primera variable, ya que no nos interesa
+CIFAR10_10Kx$X = NULL
+
+# Lista datos
+datos = list(train = list(x = list(), y = list()), test = list(x = list(), y = list()))
+
+# Bucle que almacena las imágenes de cada partición en cada lista correspondiente. El primer índice distingue entre 'training' y 'test'. El segundo entre 'x' e 'y'. El tercero distingue entre particiones.
+for (i in 1:nConj){
+  datos[[1]][[1]][[i]] = data.matrix(CIFAR10_10Kx[unlist(Particiones[i], FALSE, FALSE),]) / 255
+  datos[[1]][[2]][[i]] = to_categorical(CIFAR10_10Ky[unlist(Particiones[i], FALSE, FALSE),]$x, nConj)
+  datos[[2]][[1]][[i]] = data.matrix(CIFAR10_10Kx[-unlist(Particiones[i], FALSE, FALSE),]) / 255
+  datos[[2]][[2]][[i]] = to_categorical(CIFAR10_10Ky[-unlist(Particiones[i], FALSE, FALSE),]$x, nConj)
+}
+```
+
+```{r}
+dim(datos[[2]][[1]][[1]])
+```
+
+
+Para simplificar el proceso de después, se han realizado ciertas modificaciones sobre los conjuntos de datos para que estén correctamente formateados y poder usarlos con **Keras**.
+
+**El data.frame que contenía la información de las imágenes se ha convertido a una matriz, es decir, un array bidimensional. Además, normaliza los colores en [0,1] dividiéndolos entre 255.**
+
+**La variable que contenía la información de clasificación de las imágenes se ha convertido un formato que acepta keras con la función `to_categorical()`. Esta, convierte la información sobre a qué clase pertenece cierta imagen en una opción binaria, siendo 1 si pertenece a una clase determinada o 0 si no.**
+
+A la lista datos se podrá acceder mediante los índices o los nombres de las listas,. Es decir, con las siguientes dos órdenes estaríamos accediendo a la misma información.
+
+```{r, eval=FALSE}
+datos$train$y[[1]]
+datos[[1]][[2]][[1]]
+```
+
+
+
+
+# Redes neuronales de perceptrón multicapa (MLP)
+
+Una red neuronal de perceptrón multicapa es un tipo de red neuronal que reúne perceptrones en diferentes capas conectadas de principio a fin. Tenemos tres tipos de capas en estas redes:
+
+* **Capa de entrada**. Son las neuronas que introducen los patrones de entrada en la red.
+
+* **Capa oculta**. Son las capas intermedias de la red.
+
+* **Capa de salida**. Son las neuronas que determinan la salida de la red.
+
+
+Vamos a realizar dicha red con la librería Keras. Podemos personalizar con muchos hiperparámetros las redes que construyamos. Antes de explicar cómo quedará diseñado nuestro primer modelo, vamos a explicar otros conceptos básicos y comunes a todos.
+
+Tenemos 8000 ejemplos de training y 3072 entradas, por lo que a priori es una red con cierta complejidad. Debemos tener cuidado con el número de capas y nodos que ponemos en la red, ya que podríamos crear una que tarde demasiado en computar y consuma excesiva memoria.
+
+
+En el siguiente gráfico podemos observar la distribución por clases de las imágenes. Con esto observamos cómo de sencilla será la clasificación de las mismas, viendo cómo de clara es la separación entre clases.
+
+```{r}
+n = 8000
+mask = sample(1:nrow(CIFAR10_10Kx),n)
+pca = prcomp(CIFAR10_10Kx[mask,])
+cols = rainbow(10)
+colors = cols[1 + CIFAR10_10Ky$x[mask]]
+plot(pca$x[,1],pca$x[,2],col=colors,pch=19,cex=0.3,
+     xlab="1st PCA",ylab="2nd PCA",main=paste0("PCA plot, ",n," images MNIST"))
+legend("topright",fill=cols,
+       title="Digits",
+       col=cols,
+       legend=0:9,cex=0.6)
+```
+
+Vemos que se encuentran muy entremezcladas entre sí, sin una división clara, aunque ciertas clases se encuentran en zonas claras del espacio. Esto nos anticipa que se trata de un problema complejo y una red simple no será capaz de sobreponerse a tal complejidad para separar las imágenes en clases.
+
+
+Los aspectos que modificaremos de cada modelo son los siguientes:
+
+* **Capas**. Tendremos una capa de entrada que modelará cómo se leen los datos del conjunto. Tendremos una capa de salida que tendrá el mismo número de nodos que clases que clasificamos. Y finalmente tendremos una o dos capas ocultas que pueden contener un número cualquiera de nodos (no siendo éste demasiado excesivo), y que se encargarán de entender lo mejor posible el problema para clasificar las imágenes.
+* **Número de nodos**. Un número muy bajo de nodos en las capas ocultas hará que la red no sepa clasificar adecuadamente, obteniendo así malos resultados. Sin embargo, utilizar demasiados nodos en nuestra red provocará overfitting y un sobreetendimiento del problema, lo cual no nos interesa y conllevará un modelo demasiado complejo, con un excesivo consumo de tiempo y memoria. Además, tampoco garantizará mejores resultados.
+* **Funciones de activación**. Tenemos muchas, y no podemos probarlas todas. Vamos a mencionar algunas que son importantes y podrían dar un buen resultado:
+    * *Softmax*. Esta es la función por activación que se utiliza comúnmente en la capa de salida para clasificar los ejemplos en clases. Convierte un valor de regresión en una clasificación, que al final es el tipo de problema que estamos resolviendo.
+    * *Relu*. Se trata de una de las funciones más utilizadas en redes neuronales por sus buenos resultados en cualquier problema.
+    * *Sigmoid y Tanh* (Hyperbolic Tangent). *Tanh* es una evolución de la función *sigmoid*, y está adquiriendo importancia con el paso del tiempo, ya que también devuelve buenos resultados.
+* **Funciones de optimización**. Al igual que en el caso anterior, aquí tenemos otra gran variedad de opciones. La más utilizada es *SGD* (Stochastic gradient descent), y hay otras como *Adagrad*, *Adadelta*, y *Adam* que tienen cierta reputación. Para no agrandar el tamaño de este Markdown se han realizado pruebas a parte y la función que mejor se comportaba con nuestro problema fue *Adam*, por lo tanto, es la que utilizaremos en todo el documento.
+
+A parte de los hiperparámetros y la arquitectura que podemos modificar en los modelos también podemos indicar como entrenar los modelos. Esto lo realizamos con los *epochs* y el *batch_size*. Los *epochs*, épocas en español, indican el número de veces que se entrena el conjunto de datos con la red neuronal. Son el número de "pasadas" que se realizan a los datos. El *batch_size* indica el número de ejemplos que contendrá cada bloque de ejemplos que se entrena, ya que el conjunto de datos se puede dividir en varias partes para entrenar de forma más específica y menos general. Cuantas más divisiones realicemos, mayor será el tiempo de cómputo y el riesgo de overfitting, pero también la red aprenderá mejor.
+
+
+Comenzaremos con un primer modelo sencillo, con la capa de entrada, una capa oculta y una capa de salida. **La capa de entrada tendrá 3072 nodos, adaptándose a las 3072 variables de nuestro problema**. **La capa oculta tendrá tan solo 32 nodos**. Queremos comenzar con una arquitectura muy sencilla y ver que resultados arroja. Este es un punto de partida discreto, aunque quizá suficiente, ya que si cuando aumentemos este númeor no mejoramos lo suficiente veremos que será igual cuanto más aumentemos la complejidad de la red porque no va a obtener mejores resultados para el problema de clasificación de imágenes que estamos tratando. **La capa de salida tendrá 10 nodos, uno por cada clase del problema**.
+
+Ya que vamos a realizar diez ejecuciones por modelo queremos que la red sea rápida, y como la potencia de cómputo lo permite, **comenzaremos con un batch_size elevado, de 768**. Así, los datos se dividen en cuatro conjuntos en cada *epoch*. **Utilizaremos 100 epochs** para obtener el máximo rendimiento posible desde el principio y no quedarnos cortos, aunque eso cueste algo más de tiempo de cómputo, ya que un número adecuado de *epochs* devuelve un mejor resultado que un bajo número de *batch_size*.
+
+Las función de activación que se utilizará en este primer modelo será **relu**.
+
+
+Una vez explicado el primer modelo, vamos a crearlo, compilarlo, entrenarlo, y validarlo. Para mejorar la simpleza, legibilidad y mantenimiento del código se ha concentrado el código que muestra los resultados y los imprime en forma de gráficas en las siguientes dos funciones:
+
+```{r}
+plotResults1 <- function(historys, history){
+  loss = list()
+  val_loss = list()
+  accuracy = list()
+  val_accuracy = list()
+  
+  for (i in 1:nConj){
+    loss[[i]] = historys[[i]][[2]][[1]]  # historys[[i]]$metrics$loss
+    val_loss[[i]] = historys[[i]][[2]][[3]]  # historys[[i]]$metrics$val_loss
+    accuracy[[i]] = historys[[i]][[2]][[4]]  # historys[[i]]$metrics$accuracy
+    val_accuracy[[i]] = historys[[i]][[2]][[2]]  # historys[[i]]$metrics$val_accuracy
+  }
+  
+  history$metrics$loss = rowMeans(cbind(array(as.numeric(unlist(loss)), dim = c(100,1,10))[,,]))
+  history$metrics$val_loss = rowMeans(cbind(array(as.numeric(unlist(val_loss)), dim = c(100,1,10))[,,]))
+  history$metrics$accuracy = rowMeans(cbind(array(as.numeric(unlist(accuracy)), dim = c(100,1,10))[,,]))
+  history$metrics$val_accuracy = rowMeans(cbind(array(as.numeric(unlist(val_accuracy)), dim = c(100,1,10))[,,]))
+  
+  cat("Los errores de entrenamiento y evaluación finales son", history$metrics$loss[epochs],"y",
+      history$metrics$val_loss[epochs],"\n")
+    
+  cat("Los valores de accuracy de entrenamiento y evaluación finales son", history$metrics$accuracy[epochs],"y",
+      history$metrics$val_accuracy[epochs],"\n")
+  
+  
+  plot(history)
+}
+
+plotResults2 <- function(history){
+  vymax = max(c(history$metrics$loss,history$metrics$val_loss))
+  plot(history$metrics$loss,main="Training/Validation errors",col="blue",
+       type="l",xlab="Epochs",ylab="Loss",ylim=c(0,vymax))
+  lines(history$metrics$val_loss,col="red")
+}
+```
+
+No se han unido en una única función porque R no mostraba ambas gráficas, tan solo una.
+
+Definimos las variables comunes a todos los modelos:
+
+```{r}
+epochs = 100
+batch_size = 768
+input_shape = c(3072)
+num_classes = 10
+```
+
+
+Primer modelo:
+
+```{r}
+for (i in 1:nConj){
+  model = keras_model_sequential() 
+  model %>% 
+    layer_dense(units = 32, activation = 'relu', input_shape = input_shape) %>%
+    layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+Este modelo genera casi 100.000 parámetros. No es una cifra muy elevada pero si algo significante. ¿Por qué obtenemos tantos parámetros si hemos apuntado que nuestra red es simple? Por la gran cantidad de nodos que tiene la red en la entrada. Esto hace que la red que se vaya a construir a partir de ahí, por pocos nodos que sea, tendrá un número de parámetros considerable.
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+El valor objetivo en la práctica con este tipo de redes MLP es 0.4 en el accuracy. Y los resultados obtenidos no son muy halagadores. Tenemos margen de mejora, y debemos ver cómo hacerlo.
+
+Lo que también se observa, mirando tanto los datos como las gráficas, es que no se produce overfitting aunque estamos cerca. Esto es detectado en primer lugar porque los valores de accuracy son dispares entre entrenamiento y evaluación. También hay dispariedad entre los valores de loss. En la gráfica además vemos como las curvas de los datos de entrenamiento (la roja) se separa de la azul.
+
+Sin embargo, esto no es algo raro, es normal que se obtengan mejores resultados de los datos del conjunto de entrenamiento, siempre y cuando no se vea afectado el resultado de validación, y en este caso no empeora en ningún momento. Por esta razón no vamos a tratarlo por el momento, pero es posible que tengamos que hacerlo más adelante.
+
+Para conseguir un mejor resultado de la red vamos a realizar dos cambios. En primer lugar, vamos a aumentar el **número de nodos de la capa oculta a 256**, lo cual aumentará la complejidad de la red adecuándose más al problema. Estamos tratando un problema muy complejo como hemos podido analizar viendo la gráfica dibujada al principio de este apartado, y la red que hemos construido es muy sencilla. En segundo lugar, vamos a cambiar la función de activación para utilizar **tanh** y ver si esta es mejor que relu. En caso contrario, volveremos a ella o probaremos con otra.
+
+
+```{r}
+for (i in 1:nConj){
+  model = keras_model_sequential() 
+  model %>% 
+    layer_dense(units = 256, activation = 'tanh', input_shape = input_shape) %>%
+    layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+Lo primero que se observa es claramente un aumento de la complejidad de la red. Pensemos que hemos multiplicado por 8 el número de nodos de la capa oculta que teníamos anteriormente, y eso se traduce en muchos parámetros más. El tiempo de cómputo será mucho mayor que antes pero esto es algo necesario dado el resultado obtenido. Dado el gran número de variables de la entrada, incluso podríamos decir que no es una cifra disparatada.
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+Hemos obtenido un resultado muy positivo, cumpliendo el objetivo marcado anteriormente. Hemos sin embargo incrementado el problema del overfitting, siendo ahora ya real. Lo podemos observar sobre todo en la segunda gráfica, que solo contempla la diferencia de error. La línea azul solo baja mientras que la roja, a partir del epoch 55 aproximadamente aumenta ligeramente. Tenemos dos maneras de tratar el overfitting, una es utilizar un **regularizador L1, L2 o L1 y L2**. Otra es utilizar la técnica de dropout.
+
+Lo que hacen las técnicas de regulación es reducir la importancia de ciertos parámetros (pesos) en la red, consiguiendo así que todos tengan una importancia y no se centre excesivamente en ciertos parámetros. Con el **dropout** eliminamos ciertos parámetros aleatoriamente en función del ratio indicado. En esta red vamos a optar por la segunda opción, más adecuada para redes neuronales complejas como la nuestra. **El valor por defecto que se utiliza con esta ténica suele ser 0.5**, que equivale a descartar el 50% de los parámetros. En función de cómo responda le asignaremos más o menos porcentaje.
+
+```{r}
+for (i in 1:nConj){
+  model = keras_model_sequential() 
+  model %>% 
+    layer_dense(units = 256, activation = 'tanh', input_shape = input_shape) %>%
+    layer_dropout(rate=0.5) %>%
+    layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+Se sigue produciendo overfitting aunque en menor medida, por lo que para el siguiente modelo aumentaremos ese ratio a 0.65. Hemos visto que aumentar la complejidad de la red ha mejorado el resultado, lo cual es evidente porque en el estudio del problema hemos indicado que se trataba de un problema complejo. Sin embargo, para la cantidad de ratio en el que hemos aumentado el número de nodos la mejora obtenida ha sido muy poca. Esto nos puede hacer indicar que quizá tengamos que crear una red muy compleja para obtener un buen resultado o que directamente esta red no es adecuada para resolver este tipo de problemas.
+
+Vamos a seguir aumentando la complejidad de esta primera capa para probar nuestro punto. Ahora tendremos el doble de nodos, 512, y en función de cómo se comporte tomaremos una decisión. Al tener más nodos es lógico aumentar el droput, por lo que **subiremos el ratio al 0.75**.
+
+```{r}
+for (i in 1:nConj){
+  model = keras_model_sequential() 
+  model %>% 
+    layer_dense(units = 512, activation = 'tanh', input_shape = input_shape) %>%
+    layer_dropout(rate=0.75) %>%
+    layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+La primera consecuencia de esto es que el número de parámetros de nuestra red es ahora el doble que antes. Lo cual es lógico evidentemente ya que hemos doblado la cantidad de nodos que tenemos en la capa oculta. Estamos alcanzando ya números demasiados altos para una red neuronal, lo cual no es nada positivo, y no deberíamos seguir aumentando la complejidad de la misma.
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+No tenemos absolutamente nada de overfitting, por lo que incluso podríamos reducir un poco el ratio de dropout. Quizá con más epochs, 150 por ejemplo, podríamos seguir entrenando la red y conseguir un resultado aún mejor, ya que como podemos observar en las gráficas, las líneas de accuracy siguen en crecimiento en el epoch número 100. Sin embargo, aunque aumentáramos el número de épocas, tampoco se conseguiría mucha mejora, porque el crecimiento de la red es ya muy lento y a cambio tendríamos mucho más tiempo de cálculo, por lo que si buscamos una relación complejidad/resultado no sale rentable.
+
+Si aumentar el número de nodos en la primera capa oculta no mejora nuestra red, quizá lo haga colocando una segunda capa oculta conectada completamente a la primera. Por lo tanto, **volvemos a la red en la que teníamos 256 nodos en la primera capa oculta y creamos una segunda capa con 128 nodos**. La mitad que la primera. Poner pocos no sería muy resolutivo ya que podríamos obtener un mal resultado, y poner muchos aumentaría mucho el tiempo de cómputo.
+
+Si mejoramos el resultado seguiremos experimentado con esta segunda capa, si por el contrario lo empeora, concluiremos que, a priori, una segunda capa oculta no mejora nuestra red.
+
+**A esta segunda capa le colocaremos un droput de 0.5**.
+
+```{r}
+for (i in 1:nConj){
+  model = keras_model_sequential() 
+  model %>% 
+    layer_dense(units = 256, activation = 'tanh', input_shape = input_shape) %>%
+    layer_dropout(rate=0.65) %>%
+    layer_dense(units = 128, activation = 'tanh') %>%
+    layer_dropout(rate=0.5) %>%
+    layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+Con este aumento de complejidad no se dispara el número de parámetros lo cual es muy positivo. Tener muchos nodos en la segunda capa oculta es mucho menos costoso computacionalmente que tenerlos en la primera.
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+**El resultado es peor**. No solo no hay mejora sino que empeoramos, y aunque la curva de accuracy sigue siendo ascendente en el epoch 100 nos ocurre lo mismo que en el modelo anterior, no conseguiríamos una gran mejora aumentando el número de épocas. Un punto positivo es que no se produce overfitting.
+
+
+## Mejor modelo
+
+El mejor modelo encontrado de las redes MLP es aquel que solamente tenía una capa oculta con 256 nodos. El tratamiento del overfitting se producía con la técnica Dropout, añadiendo una capa de este tipo a continuación de la capa oculta descrita y con un ratio de descarte de 0.65. La función de activación que mejor se comporta es *tanh* y la de optimización *Adam*.
+
+
+
+
+# Redes convolucionales
+
+Son un tipo de las redes feed forward fully connected (FFFC). Su idea general es una red MLP como las construidas anteriormente, a las que se le añaden filtros que transforman las imágenes originales realizándoles algún tipo de modificación (con multiplicación de matrices) para su mejor entendimiento y procesamiento en la red.
+
+Este tipo de redes son normalmente usadas para el reconocimiento y trabajo con imágenes en redes neuronales, ya que usualmente dan un buen resultado.
+
+Tal y como se explica en el archivo de prácticas de las redes convolucionales, analizar una imagen con una red neuronal MLP es muy costoso, ya que se generan demasiados parámetros incluso para una imagen simple. En nuestro caso, el mejor modelo encontrado tiene alrededor de 800.000 parámetros, lo cual es una cifra muy elevada para una red neuronal, con un alto coste de memoria y de tiempo. Las redes convolucionales permiten reducir la complejidad de la red, no solo mejorando así el uso de memoria sino también el resultado final obtenido.
+
+Antes de diseñar el primer modelo de red neuronal vamos a cambiar la estructura de los datos. En las redes MLP la entrada era un array de dos dimensiones (o una matriz) con 8000 entradas de 3072 variables que representaban los colores de los píxeles de la imagen. Ahora, tenemos que crear un array de 4 dimensiones. La primera dimensión, al igual que en el caso anterior tendrá los 8000 ejemplos. Después tendremos una dimensión donde se representan las dilas, después, otra donde se representan las columnas, y finalmente tendremos tres valores que representan el RGB de cada píxel.
+
+El tamaño de las imágenes son 32x32, es decir, 32 píxeles de altura y 32 de anchura:
+
+```{r}
+height = 32
+width = 32
+```
+
+Recorremos todos los conjuntos de entrenamiento y de test, cambiando su estructura a la mencionada anteriormente:
+
+```{r}
+for (i in 1:nConj){
+  datos[[1]][[1]][[i]] = array_reshape(datos[[1]][[1]][[i]], c(8000, 32, 32, 3))
+  datos[[2]][[1]][[i]] = array_reshape(datos[[2]][[1]][[i]], c(2000, 32, 32, 3))
+}
+```
+
+Una vez cambiada la representación de los datos en la variable *datos*, cambiamos también la variable input_shape que indica al modelo cómo se representará la entrada. Indicamos que cada ejemplo tendrá 32x32x3.
+
+```{r}
+input_shape = c(32, 32, 3)
+```
+
+Ahora si, vamos a definir el primer modelo de redes convolucionales. La estrategia que se sigue para construir los modelos ha sido desarrollada a partir de las recomendaciones del siguiente artículo de la web pyimagesearch.com: https://www.pyimagesearch.com/2018/12/31/keras-conv2d-and-convolutional-layers/.
+
+Trabajaremos con dos tipos de capas.
+
+* Las **capas de convolución** aplican filtros a las imágenes para transformarlas y que sean más sencillas de tratar en las capas ocultas de la red. Los parámetros que se pueden modificar en esta capa son los siguientes:
+
+    * El **número de nodos o de filtros** que se aplicarán a la imagen. Cada uno se encargará de modelar o modificar un aspecto de la imagen. Cuanto antes se encuentre la capa de convolución, menos filtros son necesarios, y ocurre lo contrario al final. Lo común y recomendado es utilizar números potencia de dos, y son habituales los rangos [32,64,128] y [256,512,1024]. Comenzaremos con dos capas de convolución con 32 y 64 filtros.
+    * El siguiente parámetros es el **tamaño del kernel**, es decir, de la matriz que se aplica sobre la imagen. Para imágenes de un tamaño igual o mayor a 128x128 se comienza utilizando un tamaño de (7x7) o (5x5) y se va disminuyendo conforme se reduce la complejidad de la red gracias a las capas de pool. En este caso, ya que las imágenes son tan solo de 32x32 se utilizará (3x3) como máximo, y en algunos casos se utilizará (1x1).
+    * Otro parámetros que podemos modificar es el llamado ***strides***, que es el número de píxels que avanza la matriz que va tratando la imagen. En este caso iremos avanzando píxel a píxel, tanto por el ancho como por el alto de la imagen.
+    * El parámetro ***padding*** se encarga de rellenar los bordes de la figura artificialmente. Con el valor *valid* estaríamos reduciendo las dimensiones de la imagen en aquellos casos que así se produzca. Con *same* se rellena la imagen artificalmente para que conserve su tamaño. No tenemos intención en que la imagen conserve su tamaño, por lo que estableceremos esta variable al valor *valid*, que es además el valor por defecto de esta capa en Keras.
+    * Al igual que ocurría en las capas ocultas aquí también tenemos que elegir una **función de activación**. *Relu* funciona normalmente con buenos resultados, sin embargo, dadas nuestras satisfactorias pruebas con *tanh*, seguiremos usándola por el momento.
+
+* Los otros tipos de capas son las capas de pooling. Estas se encargan de ir reduciendo la complejidad de la red, y se suelen colocar a continuación de las capas de convolución. En este caso se colocarán dos, cada una detrás de la capa de convolución. El tamaño será de (2x2).
+
+En este primer modelo realizaremos poco tratamiento de la imagen a la entrada. Tan solo aplicaremos 32 filtros al principio con un kernel de (3x3) y 64 filtros a continuación, esta vez con un kernel de (1x1). Al terminar cada capa, se aplicará una capa de pooling que reducirá la complejidad de la imagen, para poder así aplicar mejor los siguientes filtros.
+
+Las capas de convolución se encargan de extraer características de las imágenes. Esto hace que la tarea de clasificar en clases sea más sencilla para la red, ya que tiene resaltadas ciertas características de las imágenes que facilitará el trabajo de distinguirlas entre si. Al reducir la complejidad del problema, debe hacerlo también la capa oculta. Antes teníamos 256 nodos, y vimos que aumentar ese número aumenta la complejidad de la red y no funciona bien con el problema, ya que no clasifica correctamente. 64 es una cifra razonable, no muy alejada de ese 256 y no es una cifra baja. Para comenzar es un valor medio correcto.
+
+Las funciones de optimización y activación que utilizaremos serán las mismas que en el caso de las redes MLP, ya que se comportan bien en este problema.
+
+Procedemos ahora a compilar el primer modelo, a entrenarlo y a evaluarlo:
+
+```{r}
+for (i in 1:nConj){
+  # Cargamos la librería de keras para la función 'to_categorical'.
+  library(keras)
+  
+  model = keras_model_sequential() 
+  model %>% 
+    layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = 'tanh', padding = "valid", strides = c(1L, 1L), input_shape = input_shape) %>%
+    layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+    layer_conv_2d(filters = 64, kernel_size = c(1,1), activation = 'tanh', padding = "valid", strides = c(1L, 1L)) %>%
+    layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+    layer_flatten() %>%
+    layer_dense(units = 64, activation = 'tanh') %>%
+    layer_dropout(rate=0.2) %>%
+    layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+El modelo compilado tiene pocos parámetros en comparación con lo que ocurría con las redes MLP, tan solo 204.426. Esto conlleva un mejor uso de la memoria de la máquina, aunque el tiempo de ejecución ha aumentado.
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+Los resultados extraídos no serán valorados debido al overfitting que se ha producido. Es demasiado acentuado para poder obtener conclusiones. Por lo tanto, la primera modificación que realizaremos será ejecutar la misma red que antes añadiendo una capa de dropout al final de ambas capas de convolución. El rate debe ser muy elevado, ya que el overfitting ha sido muy pronunciado.
+
+```{r}
+for (i in 1:nConj){
+  # Cargamos la librería de keras para la función 'to_categorical'.
+  library(keras)
+  
+  model = keras_model_sequential() 
+  model %>% 
+    layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = 'tanh', padding = "valid", strides = c(1L, 1L), input_shape = input_shape) %>%
+    layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+    layer_conv_2d(filters = 64, kernel_size = c(1,1), activation = 'tanh', padding = "valid", strides = c(1L, 1L)) %>%
+    layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+    layer_dropout(rate=0.7) %>%
+    layer_flatten() %>%
+    layer_dense(units = 64, activation = 'tanh') %>%
+    layer_dropout(rate=0.2) %>%
+    layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+Ahora si tenemos un resultado que podemos analizar. Es claramente mejor que lo que obteníamos con las redes MLP, lo cual era lo esperado, ya que sabíamos de antemano que tratar las imágenes con capas de convolución iba a facilitar la tarea a la red. Vamos ahora a seguir realizando pruebas en la red para obtener una mejor clasificación.
+
+Realizaremos varios cambios. En primer lugar, dado que extraer estas características de la imagen es positivo, seguiremos haciéndolo con una nueva capa de convolución. Vamos a añadir una de 128 filtros a continuación de las dos anteriores. Además, el kernel de la capa de 64 filtros será ahora de (3x3) y el de 128 de (1x1). Para no caer de nuevo en un problema de overffiting, añadiremos una nueva capa de droput al final de la de convolución de 128 filtros. Y entre ambas, una de pooling, para reducir aún más la complejidad de la imagen.
+
+La capa oculta la dejaremos igual. Dado que las imágenes serán ahora más simples, incluso podríamos disminuir la cantidad de nodos de la misma. Sin embargo, ya que no es un número elevado lo dejaremos como anteriormente.
+
+```{r}
+for (i in 1:nConj){
+  # Cargamos la librería de keras para la función 'to_categorical'.
+  library(keras)
+  
+  model = keras_model_sequential() 
+  model %>% 
+      layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = 'tanh', padding = "valid", strides = c(1L, 1L), input_shape = input_shape) %>%
+      layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+      layer_conv_2d(filters = 64, kernel_size = c(3,3), activation = 'tanh', padding = "valid", strides = c(1L, 1L)) %>%
+      layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+      layer_dropout(rate=0.7) %>%
+      layer_conv_2d(filters = 128, kernel_size = c(1,1), activation = 'tanh', padding = "valid", strides = c(1L, 1L)) %>%
+      layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+      layer_dropout(rate=0.3) %>%
+      layer_flatten() %>%
+      layer_dense(units = 64, activation = 'tanh') %>%
+      layer_dropout(rate=0.2) %>%
+      layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+En primer lugar observamos que el número de parámetros es prácticamente la mitad que antes. Esto ocurre porque hemos añadido otra capa de dropout al final de la capa de 128 filtro. Esto reduce la mitad la complejidad de la imagen, y provoca que tengamos menos nodos totalmente conectados en la capa oculta. Esto es algo positivo, ya que consumiremos menos recursos, y como hemos dicho anteriormente, podríamos haber reducido el número de nodos de la capa oculta.
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+Encontramos un poco de overfitting, sin embargo no es excesivo y no empeora los resultados, ya que vemos que la curva de accuracy sigue siendo ascendente en el epoch número 100, y lo mismo ocurre con la curva de loss, pero en sentido descendente. Lo que también nos indica esto es que con un número mayor de épocas y con un tratamiento más agresivo del overfitting obtendríamos un mejor resultado.
+
+Ya que añadir esta nueva capa convolucional no ha mejorado nuestra red, tenemos que intentar encontrar otra manera de añadir capas de convolución que añalicen la imagen para un mejor comportamiento de la red MLP. Eliminamos por tanto la capa convolucional de 128 filtros y añadimos nuevas capas, de 32 y 64 filtros. Las colocaremos de manera sucesiva con las anteriores. Esto doblará el tratamiento que se le estaba dando a la imagen anteriormente. No se añadirá una nueva capa de pooling, por si eso simplificaba demasiado la imagen, y dejaremos el resto de la red igual a excepción de la capa de dropout.
+
+Anteriormente nos hemos visto obligados a descartar muchos parámetros, ya que teníamos un overfitting muy alto. Si el ratio era entonces 0.7, ahora debería ser como mínimo, y eso supone descartar el 80% de los parámetros. Algo muy elevado. Para no llegar a ese extremo utilizaremos dos capas de dropout en lugar de una. Así, repartimos los parámetros que se descartan y no tenemos un punto muy agresivo en la red. Ambas capas se colocarán después de las capas de pooling y su ratio será de 0.6.
+
+```{r}
+for (i in 1:nConj){
+  # Cargamos la librería de keras para la función 'to_categorical'.
+  library(keras)
+  
+  model = keras_model_sequential() 
+  model %>% 
+    layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = 'tanh', padding = "valid", strides = c(1L, 1L), input_shape = input_shape) %>%
+    layer_conv_2d(filters = 32, kernel_size = c(3,3), activation = 'tanh', padding = "valid", strides = c(1L, 1L)) %>%
+    layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+    layer_dropout(rate=0.6) %>%
+    layer_conv_2d(filters = 64, kernel_size = c(1,1), activation = 'tanh', padding = "valid", strides = c(1L, 1L)) %>%
+    layer_conv_2d(filters = 64, kernel_size = c(1,1), activation = 'tanh', padding = "valid", strides = c(1L, 1L)) %>%
+    layer_max_pooling_2d(pool_size = c(2, 2)) %>%
+    layer_dropout(rate=0.6) %>%
+    layer_flatten() %>%
+    layer_dense(units = 64, activation = 'tanh') %>%
+    layer_dropout(rate=0.2) %>%
+    layer_dense(units = num_classes, activation = 'softmax')
+  
+  model %>% compile(
+    loss = 'categorical_crossentropy',
+    optimizer = optimizer_adam(),
+    metrics = c('accuracy')
+  )
+  
+  act = model %>% fit(
+    datos$train$x[[i]], datos$train$y[[i]], 
+    epochs = epochs, 
+    batch_size = batch_size, 
+    validation_data = list(datos$test$x[[i]], datos$test$y[[i]]),
+    verbose = 0
+  )
+  
+  if (i == 1){
+    # Crear lista
+    historys = list(act)
+    history = act
+    summary(model)
+  } else {
+    historys[[i]] = act
+  }
+  
+}
+```
+
+El número de parámetros ha aumentado en un grado menor, lo cual no nos preocupa ni supondrá un necesario incremento en el número de nodos de la capa oculta.
+
+```{r}
+plotResults1(historys, history)
+plotResults2(history)
+```
+
+El resultado es parecido al obtenido con la primera red convolucional a la que le aplicamos dropout. Por lo tanto esta no es la manera correcta de analizar las imágenes, ya que hemos obtenido un resultado similar con un mayor consumo de recursos. Debe haber otras maneras de conseguir analizar las imágenes y extraer las carácterísticas y que esto suponga una mejor clasificación de las mismas. Este no es el camino, quizá con un número reducido de capas y un mayor número de filtros se podría conseguir, aunque a priori tampoco nos parecía una buena opción, ya que las imágenes CIFAR-10 tienen una resolución de 32x32 píxeles, eso no las hace complejas.
+
+
+## Mejor modelo
+
+El mejor modelo encontrado en este caso es curiosamente el más sencillo de los creados. El que tan solo tiene dos capas convolucionales con 32 y 64 filtros respectivamente. Cuando se ha intentado aumentar el número de capas se han obtenido peores resultados. Esto nos deja que las posibles mejoras que se podrían haber realizado son: aumentar el número de filtros en dichas capas o reducirlo, combinando esto con la incorporación de otras capas. Las funciones de activación y optimización son las mismas que utilizadas en las redes MLP, y el resto de hiperparámetros ya fueron explicados al principio de este apartado.
+
+
+
+
+# Conclusiones
+
+Hemos visto que las redes MLP que no son muy efectivas para el reconocimiento de imágenes. El accuracy que podemos conseguir como máximo no sobrepasa el 0.43 o 0.44, lo cual es un resultado muy pobre, ya que ni el 50% de las fotografías se está clasificando correctamente. Podríamos obtener mejores resultados realizando más pruebas o con un estudio más detallado del problema, pero es mejor invertir ese tiempo a otro tipo de red que se adapte mejor a este problema.
+
+Las capas de convolución extraen características de las imágenes que las hacen más fáciles de clasificar para la red. Las redes MLP no son capaces de procesar información tan compleja y clasificarla con un resultado aceptable. De hecho, aunque aumentemos el número de nodos y capas de estas redes no son capaces de entender la naturaleza de cada imagen, y los resultados no son mejores.
+
+Por eso, es evidente que las capas convolucionales aportan un valor extra a la red, y proporcionan información sesgada a las capas ocultas, las cuales son capaces de separar las imágenes de una manera más intuitiva y acertada que antes.
+
+Sin embargo, con las redes convolucionales ha ocurrido algo parecido que con las MLP. Aumentar el número de capas tampoco ha resultado positivo en ningún caso. Podríamos haber probado con mayor número de filtros, cambiando las capas de pooling, etc. Sin embargo, sabemos, viendo los buenos resultados obtenidos desde el primer momento, y que hay muchos más parámetros que combinar que en las redes MLP, que estas redes tienen margen de mejora y se podría conseguir un resultado aún mejor, cercano o superando un accuracy de 0.6.
+
+Las redes convolucionales, además, son más complejas en si mismas. No solo incluyen la arquitectura y los hiperparámetros de una red MLP, si no que aplican matrices a las imágenes para transformarlas consiguiendo una transformación del conjunto de datos, reducen la complejidad de las imágenes y así también la del problema, etc. Esto las convierte en redes más potentes que las MLP y con un mayor potencial a explotar.
+
+Con esto queda concluido este documento en el que hemos expuesto dos arquitecturas de redes neuronales diferentes a un conjunto de imágenes para comprobar qué tecnología se comportaba mejor para la tarea de clasificar las mismas, con una aproximación desde un punto de vista práctico.
+
+
+
+
+# Bibliografía
+
+Para la gestión del almacenamiento y transformación de los datos:
+
+* Documentación de R, *array_reshape*. URL: https://www.rdocumentation.org/packages/reticulate/versions/1.16/topics/array_reshape
+
+* Documentación de R, *unlist*. URL: https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/unlist
+
+* Documentación de R, *cbind*. URL: https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/cbind
+
+* Estructuras de datos en R. Alberto Muñoz García. URL: http://ocw.uc3m.es/estadistica/aprendizaje-del-software-estadistico-r-un-entorno-para-simulacion-y-computacion-estadistica/estructuras-de-datos-en-r
+
+* Transparencias Universidad de Sevilla. Francisco J. Romero Campero. URL: https://www.cs.us.es/~fran/TIB/semana3.pdf
+
+* Añadir elementos al final de una lista en un bucle. Stack Overflow. URL: https://stackoverflow.com/questions/26508519/how-to-add-elements-to-a-list-in-r-loop
+
+* Convertir lista a matriz. Stack Overflow. URL: https://stackoverflow.com/questions/37433509/convert-list-to-a-matrix-or-array
+
+Información de redes neuronales:
+
+* Intermediate Topics in Neural Networks. Matthew Stewart. URL: https://towardsdatascience.com/comprehensive-introduction-to-neural-network-architecture-c08c6d8e5d98
+
+* A guide to an efficient way to build neural network architectures- Part II: Hyper-parameter selection and tuning for Convolutional Neural Networks using Hyperas on Fashion-MNIST. Shashank Ramesh. URL: https://towardsdatascience.com/a-guide-to-an-efficient-way-to-build-neural-network-architectures-part-ii-hyper-parameter-42efca01e5d7
+
+* Selecting the Best Architecture for Artificial Neural Networks. Ahmed Gad. URL: https://heartbeat.fritz.ai/selecting-the-best-architecture-for-artificial-neural-networks-7b051f775b4
+
+* How to decide neural network architecture?. Stack Exchange. URL: https://datascience.stackexchange.com/questions/20222/how-to-decide-neural-network-architecture
+
+* How to choose the number of hidden layers and nodes in a feedforward neural network?. Stack Exchange. URL: https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
+
+* How to Reduce Overfitting With Dropout Regularization in Keras. Jason Brownlee. URL: https://machinelearningmastery.com/how-to-reduce-overfitting-with-dropout-regularization-in-keras/
+
+* Dropout Regularization in Deep Learning Models With Keras. Jason Brownlee. URL: https://machinelearningmastery.com/dropout-regularization-deep-learning-models-keras/
+
+* Keras Conv2D and Convolutional Layers. Adrian Rosebrock. URL: https://www.pyimagesearch.com/2018/12/31/keras-conv2d-and-convolutional-layers/
+
+* Understanding deep Convolutional Neural Networks 👁 with a practical use-case in Tensorflow and Keras. Ahmed Besbes. URL: https://www.ahmedbesbes.com/blog/introduction-to-cnns
+
+Otros proyectos de CIFAR:
+
+* Proyecto: Reconocimiento de Objetos de en Fotografías con CIFAR-10. Blog Unipython. URL: https://unipython.com/proyecto-reconocimiento-de-objetos-de-en-fotografias-con-cifar-10/
+
+* How to Develop a CNN From Scratch for CIFAR-10 Photo Classification. Jason Brownlee. URL: https://machinelearningmastery.com/how-to-develop-a-cnn-from-scratch-for-cifar-10-photo-classification/

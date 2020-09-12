@@ -1,0 +1,25 @@
+;
+; BIND data file for local loopback interface
+;
+$TTL	604800
+$ORIGIN	sstt9721.org.
+
+@	IN	SOA	dns.sstt9721.org. admin.sstt9721.org. (
+			      2		; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604800 )	; Negative Cache TTL
+;
+@	IN	NS	dns.sstt9721.org.
+@	IN	MX	10	mail.sstt9721.org.
+dns	IN	A	192.168.56.102
+cliente	IN	A	192.168.56.101
+servidor IN	A	192.168.56.102
+www	IN	A	192.168.56.102
+web	IN	A	192.168.56.102
+smtp	IN	A	192.168.56.102
+pop	IN	A	192.168.56.102
+ftp	IN	A	192.168.56.102
+mail	IN	A	192.168.56.102
+;@	IN	A	192.168.56.102

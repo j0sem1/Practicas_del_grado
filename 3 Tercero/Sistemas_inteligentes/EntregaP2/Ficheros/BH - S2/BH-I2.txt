@@ -1,0 +1,3 @@
+2
+Profundidad = 5
+Precipitaciones = Ligera

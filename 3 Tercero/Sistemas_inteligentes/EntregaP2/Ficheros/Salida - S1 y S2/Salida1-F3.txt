@@ -1,0 +1,30 @@
+Dominio: IDENTIFICACION DE FRUTAS
+Objetivo: Fruta
+Base de Hechos inicial:
+	Forma = Redonda
+	Color = Verde
+	Fruta = 
+	Diametro = 11
+	ClaseFrutal = 
+	NSemillas = 2
+	TipoSemilla = 
+	Superficie = 
+
+RAZONAMIENTO SEGUIDO POR EL SBR
+
+Se descartan las reglas 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene las reglas: 1, 3.
+Se aplica la regla 1 porque su identificador es menor que el del resto.
+Se ha asignado el valor 'Multiple' al atributo 'TipoSemilla'.
+
+Se descarta la regla 1 por estar marcada.
+Se descartan las reglas 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene la regla: 3.
+Se aplica la regla 3 porque es la única regla que se puede disparar.
+Se ha asignado el valor 'Emparrado' al atributo 'ClaseFrutal'.
+
+Se descartan las reglas 1, 3 por estar marcadas.
+Se descartan las reglas 2, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene la regla: 8.
+Se aplica la regla 8 porque es la única regla que se puede disparar.
+Se ha asignado el valor 'Sandia' al atributo 'Fruta'.

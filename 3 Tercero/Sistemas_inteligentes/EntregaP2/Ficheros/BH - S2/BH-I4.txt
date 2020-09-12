@@ -1,0 +1,5 @@
+4
+Mes = Octubre
+Profundidad = 8
+Precipitaciones = Fuertes
+Prediccion = Tormenta

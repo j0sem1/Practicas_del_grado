@@ -1,0 +1,17 @@
+Dominio: DETECCION DE INUNDACIONES
+Objetivo: Inundacion = No
+Base de Hechos final:
+	Mes = 
+	Estacion = 
+	Precipitaciones = 
+	Cambio = 
+	Profundidad = 1
+	Nivel = Bajo
+	Prediccion = 
+	Lluvia = 
+	Inundacion = No
+
+CAMINO HACIA EL OBJETIVO
+Como el atributo 'Profundidad' tiene el valor '1' introducido por la Base de Hechos, el SBR concluye que 'Nivel' tiene el valor 'Bajo'
+Como el atributo 'Nivel' tiene el valor 'Bajo', el SBR concluye que 'Inundacion' tiene el valor 'No'
+El SBR ha concluido que 'Inundacion' es 'No'

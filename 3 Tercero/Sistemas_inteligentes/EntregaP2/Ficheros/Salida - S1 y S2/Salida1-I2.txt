@@ -1,0 +1,31 @@
+Dominio: DETECCION DE INUNDACIONES
+Objetivo: Inundacion
+Base de Hechos inicial:
+	Mes = 
+	Estacion = 
+	Precipitaciones = Ligera
+	Cambio = 
+	Profundidad = 5
+	Nivel = 
+	Prediccion = 
+	Lluvia = 
+	Inundacion = 
+
+RAZONAMIENTO SEGUIDO POR EL SBR
+
+Se descartan las reglas 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene las reglas: 15, 18.
+Se aplica la regla 15 porque su identificador es menor que el del resto.
+Se ha asignado el valor 'Ninguno' al atributo 'Cambio'.
+
+Se descarta la regla 15 por estar marcada.
+Se descartan las reglas 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene la regla: 18.
+Se aplica la regla 18 porque es la única regla que se puede disparar.
+Se ha asignado el valor 'Normal' al atributo 'Nivel'.
+
+Se descartan las reglas 15, 18 por estar marcadas.
+Se descartan las reglas 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30, 31, 32 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene la regla: 24.
+Se aplica la regla 24 porque es la única regla que se puede disparar.
+Se ha asignado el valor 'No' al atributo 'Inundacion'.

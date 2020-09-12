@@ -1,0 +1,17 @@
+Dominio: IDENTIFICACION DE FRUTAS
+Objetivo: Fruta = Albaricoque
+Base de Hechos final:
+	Forma = Redonda
+	Color = Naranja
+	Fruta = Albaricoque
+	Diametro = 6
+	ClaseFrutal = Arbol
+	NSemillas = 1
+	TipoSemilla = Hueso
+	Superficie = 
+
+CAMINO HACIA EL OBJETIVO
+Como el atributo 'Forma' tiene el valor 'Redonda' introducido por la Base de Hechos, y el atributo 'Diametro' tiene el valor '6' introducido por la Base de Hechos, el SBR concluye que 'ClaseFrutal' tiene el valor 'Arbol'
+Como el atributo 'NSemillas' tiene el valor '1' introducido por la Base de Hechos, el SBR concluye que 'TipoSemilla' tiene el valor 'Hueso'
+Como el atributo 'ClaseFrutal' tiene el valor 'Arbol', y el atributo 'Color' tiene el valor 'Naranja' introducido por la Base de Hechos, y el atributo 'TipoSemilla' tiene el valor 'Hueso', el SBR concluye que 'Fruta' tiene el valor 'Albaricoque'
+El SBR ha concluido que 'Fruta' es 'Albaricoque'

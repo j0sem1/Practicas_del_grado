@@ -1,0 +1,212 @@
+# depslib dependency file v1.0
+1491292792 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\pantalla.c
+	"Pantalla.h"
+	<stdlib.h>
+	<signal.h>
+	<stdio.h>
+	<math.h>
+
+1491292791 d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\pantalla.h
+	"SDL2/SDL.h"
+
+1492427367 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\main.c
+	"Pantalla.h"
+	"Personaje.h"
+	"Enemigo.h"
+	"Enemigosybalas.h"
+	<stdlib.h>
+	<stdio.h>
+	<time.h>
+
+1491907640 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\enemigo.c
+	"Enemigo.h"
+	<stdlib.h>
+
+1491907622 d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\enemigo.h
+	"Pantalla.h"
+
+1491906624 d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\personaje.h
+	"Pantalla.h"
+
+1491917983 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\personaje.c
+	<stdlib.h>
+	"Personaje.h"
+
+1491916314 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\bala.c
+	"Bala.h"
+	<stdlib.h>
+
+1491916303 d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\bala.h
+	"Pantalla.h"
+
+1491917650 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\balas.c
+	"Balas.h"
+	"Bala.h"
+	"Colision.h"
+	<stdlib.h>
+
+1491919068 d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\balas.h
+	"Pantalla.h"
+
+1491292791 d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\colision.h
+
+1491292792 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\colision.c
+	<stdlib.h>
+	<math.h>
+	"Colision.h"
+
+1491915343 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\enemigos.c
+	"Enemigos.h"
+	"Colision.h"
+	<stdlib.h>
+
+1491908785 d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\enemigos.h
+	"Pantalla.h"
+	"Enemigo.h"
+
+1492427468 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\enemigosybalas.c
+	"Enemigosybalas.h"
+	"Colision.h"
+	<stdlib.h>
+	<stdio.h>
+	"Bala.h"
+	"Colision.h"
+	"Enemigos.h"
+	<stdlib.h>
+
+1491930172 d:\01universidad\04tecnologia_de_la_programacion\proyecto\spaceinvaders\enemigosybalas.h
+	"Pantalla.h"
+	"Enemigo.h"
+
+1492590217 source:c:\users\alumno\desktop\spaceinvaders\bala.c
+	"Bala.h"
+	<stdlib.h>
+
+1492590216 c:\users\alumno\desktop\spaceinvaders\bala.h
+	"Pantalla.h"
+
+1492590218 c:\users\alumno\desktop\spaceinvaders\pantalla.h
+	"SDL2/SDL.h"
+
+1492590217 source:c:\users\alumno\desktop\spaceinvaders\colision.c
+	<stdlib.h>
+	<math.h>
+	"Colision.h"
+
+1492590216 c:\users\alumno\desktop\spaceinvaders\colision.h
+
+1492590216 source:c:\users\alumno\desktop\spaceinvaders\enemigo.c
+	"Enemigo.h"
+	<stdlib.h>
+
+1492590217 c:\users\alumno\desktop\spaceinvaders\enemigo.h
+	"Pantalla.h"
+
+1492600293 source:c:\users\alumno\desktop\spaceinvaders\enemigosybalas.c
+	"Enemigosybalas.h"
+	"Colision.h"
+	"Bala.h"
+	"Enemigos.h"
+	"Personaje.h"
+	<stdlib.h>
+	<stdio.h>
+	<time.h>
+
+1492597366 c:\users\alumno\desktop\spaceinvaders\enemigosybalas.h
+	"Pantalla.h"
+	"Enemigo.h"
+	"Personaje.h"
+
+1492590217 c:\users\alumno\desktop\spaceinvaders\personaje.h
+	"Pantalla.h"
+
+1492590217 c:\users\alumno\desktop\spaceinvaders\enemigos.h
+	"Pantalla.h"
+	"Enemigo.h"
+
+1492599735 source:c:\users\alumno\desktop\spaceinvaders\main.c
+	"Pantalla.h"
+	"Personaje.h"
+	"Enemigo.h"
+	"Enemigosybalas.h"
+	<stdlib.h>
+	<stdio.h>
+	<time.h>
+
+1492590217 source:c:\users\alumno\desktop\spaceinvaders\pantalla.c
+	"Pantalla.h"
+	<stdlib.h>
+	<signal.h>
+	<stdio.h>
+	<math.h>
+
+1492590217 source:c:\users\alumno\desktop\spaceinvaders\personaje.c
+	<stdlib.h>
+	"Personaje.h"
+
+1492593817 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\bala.c
+	"Bala.h"
+	<stdlib.h>
+
+1492593816 d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\bala.h
+	"Pantalla.h"
+
+1492593818 d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\pantalla.h
+	"SDL2/SDL.h"
+
+1492593817 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\colision.c
+	<stdlib.h>
+	<math.h>
+	"Colision.h"
+
+1492593816 d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\colision.h
+
+1492593816 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\enemigo.c
+	"Enemigo.h"
+	<stdlib.h>
+
+1492593817 d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\enemigo.h
+	"Pantalla.h"
+
+1492604733 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\enemigosybalas.c
+	"Enemigosybalas.h"
+	"Colision.h"
+	"Bala.h"
+	"Enemigos.h"
+	"Personaje.h"
+	<stdlib.h>
+	<stdio.h>
+	<time.h>
+
+1492604458 d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\enemigosybalas.h
+	"Pantalla.h"
+	"Enemigo.h"
+	"Personaje.h"
+
+1492593817 d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\personaje.h
+	"Pantalla.h"
+
+1492593817 d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\enemigos.h
+	"Pantalla.h"
+	"Enemigo.h"
+
+1492612489 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\main.c
+	"Pantalla.h"
+	"Personaje.h"
+	"Enemigo.h"
+	"Enemigosybalas.h"
+	<stdlib.h>
+	<stdio.h>
+	<time.h>
+
+1492593817 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\pantalla.c
+	"Pantalla.h"
+	<stdlib.h>
+	<signal.h>
+	<stdio.h>
+	<math.h>
+
+1492593817 source:d:\01universidad\04tecnologia_de_la_programacion\proyecto\space_invaders\spaceinvaders\personaje.c
+	<stdlib.h>
+	"Personaje.h"
+

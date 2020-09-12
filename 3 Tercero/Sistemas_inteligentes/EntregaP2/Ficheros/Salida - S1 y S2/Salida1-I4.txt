@@ -1,0 +1,43 @@
+Dominio: DETECCION DE INUNDACIONES
+Objetivo: Inundacion
+Base de Hechos inicial:
+	Mes = Octubre
+	Estacion = 
+	Precipitaciones = Fuertes
+	Cambio = 
+	Profundidad = 8
+	Nivel = 
+	Prediccion = Tormenta
+	Lluvia = 
+	Inundacion = 
+
+RAZONAMIENTO SEGUIDO POR EL SBR
+
+Se descartan las reglas 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene las reglas: 5, 16, 19, 22.
+Se aplica la regla 5 porque su identificador es menor que el del resto.
+Se ha asignado el valor 'Humeda' al atributo 'Estacion'.
+
+Se descarta la regla 5 por estar marcada.
+Se descartan las reglas 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene las reglas: 16, 19, 22.
+Se aplica la regla 16 porque su identificador es menor que el del resto.
+Se ha asignado el valor 'Subiendo' al atributo 'Cambio'.
+
+Se descartan las reglas 5, 16 por estar marcadas.
+Se descartan las reglas 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene las reglas: 19, 22.
+Se aplica la regla 19 porque su identificador es menor que el del resto.
+Se ha asignado el valor 'Alto' al atributo 'Nivel'.
+
+Se descartan las reglas 5, 16, 19 por estar marcadas.
+Se descartan las reglas 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene la regla: 22.
+Se aplica la regla 22 porque es la única regla que se puede disparar.
+Se ha asignado el valor 'Fuerte' al atributo 'Lluvia'.
+
+Se descartan las reglas 5, 16, 19, 22 por estar marcadas.
+Se descartan las reglas 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31 por no poder verificar sus antecedentes.
+El ConjuntoConflicto contiene la regla: 32.
+Se aplica la regla 32 porque es la única regla que se puede disparar.
+Se ha asignado el valor 'Si' al atributo 'Inundacion'.

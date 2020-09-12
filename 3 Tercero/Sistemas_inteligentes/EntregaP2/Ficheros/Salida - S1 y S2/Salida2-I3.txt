@@ -1,0 +1,15 @@
+Dominio: DETECCION DE INUNDACIONES
+Objetivo: Inundacion = 
+Base de Hechos final:
+	Mes = Junio
+	Estacion = Seca
+	Precipitaciones = Ninguna
+	Cambio = Bajando
+	Profundidad = 
+	Nivel = 
+	Prediccion = 
+	Lluvia = 
+	Inundacion = 
+
+CAMINO HACIA EL OBJETIVO
+

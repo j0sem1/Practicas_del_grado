@@ -1,0 +1,3 @@
+Final:
+- Modificar sistema de puntuaciones (nombres si es posible)
+- Añadir pantalla de ayuda

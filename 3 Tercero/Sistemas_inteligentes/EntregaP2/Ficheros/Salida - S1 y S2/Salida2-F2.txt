@@ -1,0 +1,17 @@
+Dominio: IDENTIFICACION DE FRUTAS
+Objetivo: Fruta = Manzana
+Base de Hechos final:
+	Forma = Redonda
+	Color = Verde
+	Fruta = Manzana
+	Diametro = 8
+	ClaseFrutal = Arbol
+	NSemillas = 10
+	TipoSemilla = Multiple
+	Superficie = 
+
+CAMINO HACIA EL OBJETIVO
+Como el atributo 'Forma' tiene el valor 'Redonda' introducido por la Base de Hechos, y el atributo 'Diametro' tiene el valor '8' introducido por la Base de Hechos, el SBR concluye que 'ClaseFrutal' tiene el valor 'Arbol'
+Como el atributo 'NSemillas' tiene el valor '10' introducido por la Base de Hechos, el SBR concluye que 'TipoSemilla' tiene el valor 'Multiple'
+Como el atributo 'ClaseFrutal' tiene el valor 'Arbol', y el atributo 'Color' tiene el valor 'Verde' introducido por la Base de Hechos, y el atributo 'TipoSemilla' tiene el valor 'Multiple', el SBR concluye que 'Fruta' tiene el valor 'Manzana'
+El SBR ha concluido que 'Fruta' es 'Manzana'

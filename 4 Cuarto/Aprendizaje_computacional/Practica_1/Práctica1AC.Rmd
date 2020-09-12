@@ -1,0 +1,797 @@
+---
+title: "Predicción del voto en las elecciones británicas de 2001"
+author: "José Miguel Sánchez Almagro y Sergio González García"
+date: "20/11/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+En este documento se va a hablar sobre una encuesta realizada en el año 2001 en Gran Bretaña para saber la intención del voto de los encuestados. Se les realiza varias preguntas sobre política y luego se les pregunta cual sería su voto. El objetivo de esta encuesta en su momento era saber cómo de influyente era el Euroescepticismo en las elecciones.
+
+
+## 1. Análisis de los datos 
+
+En primer lugar cargamos los datos sobre los que vamos a trabajar en la práctica.
+
+```{r}
+library(carData)
+data(BEPS)
+```
+
+Vamos a visualizar rápidamente el conjunto de datos.
+
+```{r}
+str(BEPS)
+```
+
+Tenemos 10 variables: `vote` es la variable de salida, es decir, lo que queremos predecir. Esto lo podemos hacer analizando las variables de entrada, que son todas las demás.
+
+Vamos a analizarlas una a ahora.
+
+
+### 1.1 Reparto de votos
+
+Como podemos ver a continuación, en la encuesta había tres opciones para votar: el partido Conservador (Conservative), el partido Laborista (Labour), y el partido Liberal Demócrata (Liberal Democrat). El partido que sería más votado es el laborista por una amplia diferencia. Le sigue el partido conservador, y a continuación el demócrata.
+El número de votos del partido conservador y demócrata es parecido.
+
+```{r}
+summary(BEPS$vote)
+```
+
+Sabemos por tanto que no hay una proporción igual en el conjunto de datos, y que tendremos más del doble de información relacionada con el partido laborista que con el partido demócrata.
+
+Esto se puede ver más claramente en forma porcentual:
+
+```{r}
+porcent  <- prop.table(table(BEPS$vote)) * 100
+cbind(total=table(BEPS$vote), porcentaje=porcent)
+```
+
+
+### 1.2 Los encuestados se consideran euroescépticos, pero no lo reflejan en el voto
+
+Sabemos que el partido Conservador es euroescéptico, por lo que podría ser interesante ver cómo de euroescépticas son las personas que realizaron la encuesta.
+
+
+```{r}
+summary(BEPS$Europe)
+```
+
+La pregunta sobre euroescepticismo tiene respuesta numérica. El encuestado podía seleccionar cómo de euroescéptico se sentía en un grado del 1 a 11. Además, los datos parecen indicar que hay un mayor número de euroescepticistas a gente que no lo es.
+
+Lo vamos a visualizar con un histograma, en el que vamos a ver el número de personas que están en cada grado del euroescepticismo.
+
+```{r}
+# Representamos histograma de euroescepticismo
+hist(BEPS$Europe, probability="T", main = "Histograma del Euroescepticismo", xlab = "Grado de Euroescepticismo", ylab = "Densidad de votos")
+# Marca el valor de la media con una línea azul vertical
+abline(v=mean(BEPS$Europe), col="blue")
+# Marca el valor de la mediana con una línea roja
+abline(v=median(BEPS$Europe), col="red")
+```
+
+Este histograma parece indicar que hay una tendencia importante a al euroescepticismo en su grado más extremo, mientras que en el resto de votos se encuentra estable, excepto dos pequeños repuntes: el punto medio, y en punto no euroescepticista.
+
+Para ver esto de una manera no tan estática, vamos a visualizar una gráfica escalando los datos. Ahora en lugar de ver valores del 1 al 11, los vamos a ver del -1.7372 al 1.2954:
+
+```{r}
+summary(scale(BEPS$Europe))
+```
+
+Esto posibilita ver los votos de una manera más dinámica en forma de gráfica, para poder tener más claras las posibles conclusiones:
+
+```{r}
+plot(density(scale(BEPS$Europe)), main = "Gráfica del euroescepticismo", xlab = "Grado de euroescepticismo", ylab = "Densidad de votos")
+```
+
+Vemos que la gráfica es creciente en dos puntos: hacia el punto medio, es decir, no ser euroescéptico pero tampoco estar contento con la situación, y en el punto más extremo de la gráfica, la postura más crítica con Europa. Además, parece haber poca gente entre esos dos puntos. Aunque aquí no se aprecia, en el histograma vimos que hay también un cierto repunte en el no euroescepticismo.
+
+Volviendo al histograma, la línea roja marca la mediana, y la azul es la media. A pesar de que el partido conservador obtiene solo el 30% de los votos en la encuesta, el histograma deja entreveer que más de la mitad de la gente que ha realizado la encuesta es euroescéptica. Esto puede suponer que la variable de euroescepticismo no es relevante sobre el voto final, es decir, que puede que aunque la gente se considere euroescéptica le de mayor valor a otras cuestiones a la hora de votar.
+
+
+### 1.3 El euroescepticismo por partidos
+
+Con el siguiente gráfico podemos obsevar el grado de euroescepticismo de los encuestados de cada partido.
+
+```{r}
+plot(x=BEPS$vote,y=BEPS$Europe,xlab="Variable 4",ylab="y",
+     main="Relation between v4 and y from Friedmann1")
+```
+
+Se observa que claramente el partido conservador parece tener entre sus votantes a los más euroescépticos, y es que como hemos dicho anteriormente es el partido más crítico con Europa de los tres. El partido laborista y el demócrata están parejos, aunque parece que el laborista tiene votantes con menor euroescepticismo que los liberales. Sin embargo, de manera global están muy parejos.
+
+Con esto confirmamos que aunque los partidos no sean euroescépticos sus votantes si parecen serlo.
+
+
+### 1.4 Reparto equitativo de la edad
+
+Es conveniente saber si la edad de los encuestados es mayor en algún punto que en los demás, porque eso puede indicar que no estamos siendo fieles a la realidad.
+
+```{r}
+summary(BEPS$age)
+```
+
+La edad del encuestado más joven es 24 años, y del más mayor 93. La media se sitúa en los 54 años.
+
+Vamos a visualizar otro histograma en el que se observará el reparto de encuestados según la edad, y aquí podremos ver claramente si hay cierta concentración.
+
+```{r}
+hist(BEPS$age, probability="T", main = "Histograma de la edad de los encuestados", xlab = "Años", ylab = "Densidad de encuestados")
+abline(v=mean(BEPS$age), col="blue")
+abline(v=median(BEPS$age), col="red")
+```
+
+La edad se encuentra equilibrada, y los datos parecen indicar que la mayoría de la gente que ha participado está entre los 30 y 80 años. Sin embargo, no participó mucha gente entre 25 y 30, y el porcentaje de personas que tenía entre 20 y 25 era mínimo.
+
+Por lo tanto los datos no están balanceados o influenciados por la edad, sin embargo, la población en 2001 del Reino Unido puede que no fuera igual de ecuánime. Es decir, puede ser que hubiera mucha más población de 50 años que de 65 o de 30, por lo que aunque los datos se ecuentran equilibrados en nuestro análisis, puede que este no sea del todo fiel con la realidad.
+
+
+### 1.5 No encontramos mala percepción económica
+
+Puede ser interesante ver la percepción que tiene la gente sobre la economía en el país y sobre la economía doméstica.
+
+#### 1.5.1 La economía nacional se considera buena
+
+Como podemos ver a continuación, casi el 75% de los encuestados cree que la economía nacional es normal (considerando este valor un 3) o buena (estando este valor representado con el 4).
+
+```{r}
+porcent  <- prop.table(table(BEPS$economic.cond.national)) * 100
+cbind(porcentaje=porcent)
+```
+
+
+#### 1.5.1 La economía doméstica no se considera mala
+
+```{r}
+porcent  <- prop.table(table(BEPS$economic.cond.household)) * 100
+cbind(porcentaje=porcent)
+```
+
+En la economía doméstica, sin embargo, encontramos un mayor disentimiento. A pesar de que el valor 3 es el más votado tenemos que un 18% de la gente no le da buena nota al poder adquisitivo de las familias, y esta vez el valor 4 no tiene un tan alto porcentaje de votos.
+
+A pesar de este reparto, la mayoría de los encuestados parece considerar que la economía ni es muy buena ni es muy mala, estaríamos más cerca del aceptable, aunque algunos parecen indicar que debería mejorarse.
+
+
+### 1.6 Valoración de los políticos
+
+Algo muy interesante a priori puede ser observar cuántas personas valoran positivamente a cada líder, y cómo es valorado cada uno entre los encuestados.
+
+
+#### 1.6.1 Blair el mejor valorado
+
+```{r}
+porcent  <- prop.table(table(BEPS$Blair)) * 100
+cbind(porcentaje=porcent)
+```
+
+Blair parece ser un político bien valorado según la información que nos arrojan los datos, ya que más de un 50% de los encuestados le da un 4 sobre 5, y un 30% le dan un 2. Lo curioso sobre este candidato es que o te gusta o no te gusta, porque casi nadie le ha otorgado un 3, que sería la nota más neutral.
+
+Blair es el líder del partido laborista, el partido con más votos entre los encuestados, que recibía el 47% de los votos, por lo que esta variable parece tener relación directa, y puede ser relevante en la predicción.
+
+
+#### 1.6.2 Hague el peor valorado
+
+```{r}
+porcent  <- prop.table(table(BEPS$Hague)) * 100
+cbind(porcentaje=porcent)
+```
+
+Con Hague tenemos algo similar que con el candidato anterior, solamente un 2% le da una nota neutral, y volvemos a tener esa polarización de "te gusta" o "no te gusta". Sin embargo, y a diferencia del candidato anterior, parece ser un candidato peor valorado entre los encuestados, ya que casi a un 41% de la gente no le gusta, mientras que le gusta a aun 36%.
+
+Este es el líder del partido conservador, que aunque es el segundo más votado, el 55% de los encuestados valoran negativamente a su líder. Dicho partido ha recibido un 30% de los votos, y el líder ha sido bien valorado por un 40% de los encuestados. Como vemos otra ver, datos relacionados.
+
+
+#### 1.6.3 Kennedy, el líder menos polarizado
+
+```{r}
+porcent  <- prop.table(table(BEPS$Kennedy)) * 100
+cbind(porcentaje=porcent)
+```
+
+Kennedy sería el candidato más aceptado por todos, ya que consigue un 17% de votos neutrales, por lo que a priori parece un candidato que no disgusta. A un 26% de la gente no le gusta, siendo el candidato con menor voto en contra, y le gusta a un 44% de los participantes, lo cual es un número considerable.
+
+Sin embargo, es el líder del partido menos votado, lo cual no deja de ser sorprendente. Podríamos encontrarle cierta explicación, y es que quizás la gente vota siguiendo las posturas más extremas, y éste queda un poco en la irrelevancia, por eso se le presta menor atención.
+
+En este gráfico con cajas podemos ver lo que hemos explicado anteriormente, pero de una manera muy resumida y obviando mucha información:
+
+```{r}
+boxplot(cbind(BEPS$Blair,BEPS$Hague,
+              BEPS$Kennedy),
+        names = c("Val. Blair","Val. Hague", 
+                  "Val. Kennedy"))
+```
+
+
+### 1.7 Reparto igual de hombres y mujeres
+
+No nos vamos a detener aquí ya que como podemos ver a continuación la muestra de datos está bien repartida entre hombres y mujeres.
+
+```{r}
+porcent  <- prop.table(table(BEPS$gender)) * 100
+cbind(porcentaje=porcent)
+```
+
+Al igual que ocurre con la edad, esto es positivo para no tener polarización o cierta inclinación en los datos.
+
+
+### 1.8 La mayoría se consideran informados
+
+Y llegamos a la última variable por analizar: el conocimiento que tienen los encuestados sobre política. Estos valores van del 0 al 3, siendo 3 el valor más alto de conocimiento.
+
+```{r}
+porcent  <- prop.table(table(BEPS$political.knowledge)) * 100
+cbind(porcentaje=porcent)
+```
+
+Hasta un 30% de los participantes indican que no tienen prácticamente ningún conocimiento sobre política, lo cual es llamativo. La mitad de encuestados sin embargo indican que tienen un buen conocimiento (2), y un 16% se consideran expertos en la materia.
+
+Esto no deja con que un 67% de la gente se considera informada, lo cual es una cifra considerable. Sin embargo, tenemos casi un 30% en el otro extremo. Esto es también llamativo, y podría ser influyente en la predicción.
+
+
+
+## 2. Influencia de las preguntas en la predicción del voto
+
+
+### 2.1 Relación de los predictores con el voto
+
+Las variables de entrada, también llamadas predictores, pueden tener cierta relación con el voto final del encuestado, llamado variable de salida. Algunos predictores estarán más relaciones con dicha predicción, y algunos ni si quiera tendrán influencia. El objetivo en este apartado será intentar esclarecer aquellos predictores que son más relevantes y los que menos.
+
+Para realizar esto utilizaremos la correlación de Pearson. Para poder realizar la misma debemos contar con todas las variables de tipo numérico, y tenemos dos que no lo son: el nombre del partido al que cada persona va a votar y el género de dicha persona. Lo primero que haremos por lo tanto es convertir dichos valores en numéricos:
+
+```{r}
+vote = as.numeric(BEPS$vote)
+BEPS$gender = as.numeric(BEPS$gender)
+```
+
+
+#### 2.1.1 Blair, Hague, Kennedy y Europa: las preguntas más relevantes
+
+Una vez realizado dicho cambio, vamos a observar la correlación de todas las variables x de la encuesta con la variable y, es decir, la relación de cada de las preguntas con el voto final de cada persona. Dicha correlación la realizaremos con el Coeficiente de Correlación de Pearson.
+
+```{r}
+cor(x=BEPS[2:10], y=vote, method="pearson")
+```
+
+Los resultados arrojados por la correlación dejan entrever que las preguntas sobre Blair, Hague, Kennedy y Europa son las más relevantes, y que quizás la pregunta sobre el conocimiento del encuestado en la Economía nacional puede tener cierta importancia en algún caso.
+
+Esto es lo que ha detectado este método, pero puede que luego hayan más relaciones que no vemos aquí. Incluso también pueden haber falsos negativos y falsos positivos.
+
+Podemos visualizar la información anterior de una manera visual con el siguiente `corrplot`:
+
+```{r}
+allfrdata = data.frame(vote,BEPS[2:10])
+colnames(allfrdata) = c("Voto", "Edad", "Economía_nacional", "Economía_doméstica", "Blair", "Hague", "Kennedy", "Europa", "Concimiento_política", "Género")
+corrplot::corrplot(cor(allfrdata))
+```
+
+En este gráfico vemos la relación de cada predictor con el voto. Por ejemplo, vemos que Hague es el predictor con una mayor relación, y que la relación del Conocimiento en política o del género parece ser inexistente.
+
+Para ahondar aún más en los datos vamos a aplicar un test de correlación basado en la correlación de Pearson, que nos dará otro punto de vista de los mismos.
+
+```{r}
+pvals = apply(BEPS[2:10], 2,
+              function(x){return (cor.test(x=x, y=vote, method="pearson")$p.value)})
+
+names(pvals) = c("Edad", "Economía_nacional", "Economía_doméstica", "Blair", "Hague", "Kennedy", "Europa", "Concimiento_política", "Género")
+pvals
+```
+
+Según este test no tenemos ninguna variación respecto a la correlación realizada anteriormente. Las pregunta más influyente parece ser sobre el candidato Hague, seguida por Europa, Kennedy, y Blair. El resto se muestran prácticamente irrelevantes con la excepción de la pregunta sobre Economía nacional.
+
+La pregunta sobre Economía nacional parece tener cierta relevancia, pero podría ser más o menos relevante de lo que hemos estado suponiendo hasta ahora. También podríamos habernos encontrado con un falso negativo en la pregunta sobre economía doméstica. Para salir de dudas, vamos a analizar ambas variables con un modelo de regresión lineal.
+
+
+#### 2.1.2 La economía nacional también es importante
+
+Primero lo aplicaremos a la variable de Economía nacional:
+
+```{r}
+mymodel = lm(Voto ~ Economía_nacional,data=allfrdata)
+summary(mymodel)
+```
+
+Observando la última línea vemos que el valor de F-statistic es alto, mientras que el valor de p-value es bajo, por lo que hay una relación entre la pregunta y la respuesta final del voto. El valor de Residual standard error es alto, ya que se sitúa en 0.71 mientras que el máximo está en 1.38. Finalmente, Multiple R-squared nos arroja un 0.028, lo cual tampoco es un valor elevado.
+Sin embargo, Pr(>|t|) nos está indicando que hay una relación.
+
+Todo lo anterior nos indica que deberíamos tener esta pregunta en cuenta. Además, este modelo proporciona una manera muy visual y sencilla de ver la importancia de un predictor. A la derecha de la última columna de la fila `Economía_nacional` vemos tres asteriscos (***). Estos nos están indicando que el predictor tiene una relación importante con la variable de salida.
+En el caso de dos asteriscos tiene cierta relación, con un asterisco un poco, y cuando no tenemos ninguno es que no ha encontrado relación
+
+
+#### 2.1.3 La economía doméstica no es irrelevante
+
+Vamos ahora a estudiar la pregunta de Economía doméstica:
+
+```{r}
+mymodel = lm(Voto ~ Economía_doméstica,data=allfrdata)
+summary(mymodel)
+```
+
+Volvemos a tener que F-statistic es más alto que p-value, que el Residual standard error es alto respecto al valor Max de Residuals, y que Multiple R-squared es bajo. Sin embargo, en este caso es más bajo que en el caso anterior.
+Además, el valor de Pr(>|t|) solo tiene dos asteriscos mientras que antes teníamos tres. Aún así es significativo que una pregunta que teníamos descartada a priori ahora parece tener cierta relevancia.
+
+
+#### 2.1.4 La edad sorprende con relación no vista hasta ahora
+
+Dados los resultados anteriores merece la pena observar la pregunta sobre la edad:
+
+```{r}
+mymodel = lm(Voto ~ Edad,data=allfrdata)
+summary(mymodel)
+```
+
+Volvemos a encontrarnos con resultados parecidos. Esto nos hace ver que son preguntas con más importancia de la que podíamos pensar en un principio. El predictor de la edad tenía un resultado pobre, pero sin embargo ahora vemos que no deberíamos descartar dicha pregunta.
+
+
+#### 2.1.5 El género continúa sin relevancia aparente
+
+Con el género por ejemplo no tenemos esta relevancia:
+
+```{r}
+mymodel = lm(Voto ~ Género,data=allfrdata)
+summary(mymodel)
+```
+
+En este caso no tenemos ni si quiera un asterisco, por lo que no merece la pena darle más importancia en este momento, porque como se ha dicho anteriormente, la correlación de Pearson no encuentra todas las relaciones posibles. Algunos métodos de Machine Learning encuentran otras relaciones que no se detectan con esta técnica.
+
+
+#### 2.1.6 Conclusiones finales
+
+Vamos a completar este análisis con regresión lineal multivariable. Veremos la relación de todas las preguntas simultáneamente con la pregunta del voto.
+
+```{r}
+mymodel = lm(Voto ~ .,data=allfrdata)
+summary(mymodel)
+```
+
+Cuando se comparan todos los predictores al mismo tiempo los resultados cambian. Tenemos que las preguntas sobre economía son irrelevantes respecto a las demás, que la de la edad tiene aún mayor relación de la que se había pensado, y que el predictor sobre conocimiento en la política también tiene cierta relación.
+
+Una vez realizado este análisis, vemos en algunos casos resultados dispares, por lo que lo único que podemos confirmar es que los predictores sobre Blair, Gague, Kennedy y Europa parecen estar muy relacionados con la predicción del voto, y que el género no parece tener ninguna relación a la hora de votar.
+
+
+### 2.2 Importancia de los predictores y las relaciones entre ellos
+
+Hemos realizado un análisis de los predictores con la correlación de Pearson que encuentra relaciones de los predictores con la variable de salida. Esto ocurre porque estamos ante un problema de Machine Learning supervisado, pero podemos realizar otro análisis usualmente usado en problemas de Machine Learning no supervisado, es decir, aquellos en los que no contamos con una variable de salida.
+
+Dicho análisis lo realizaremos con PCA. R tiene varios métodos rápidos que calculan PCA. Uno de ellos es `prcomp`, que es el que usaremos en este caso de estudio. Con PCA veremos la cantidad de varianza original que describe cada predictor, y así poder predecir su importancia en el problema.
+
+Ejecutamos `prcomp`:
+
+```{r}
+pca_result = prcomp(BEPS[2:10], scale = TRUE)
+```
+
+Lo que se va mostar a continuación es llamado la matriz de rotación en el contexto de R.
+Cada columna es uno de los posibles PCAs que podemos obtener, cada fila es el peso de cada predictor en dicha expresión.
+
+```{r}
+# matrix within the R context
+pca_result$rotation
+```
+
+En la columna PC1 tenemos varios predictores con un peso relevante: Blair, Economía nacional, Europe, Hague, y Economía doméstica. EL predictor de Kennedy pierde peso frente a los dos predictores sobre economía.
+
+En PC2 los más relevantes con cierta distancia son Conocimiento político y género, pero como esto no resulta muy verosímil en un principio lo descartaremos.
+
+En PC3 volvemos a tener mucha importancia en el género, lo cual no deja de ser curioso. Kennedy y la Economía doméstica también tienen una importancia signficativa.
+
+Otro bastante llamativo es PC4, que le da un peso muy grande a la edad y al resto no le da prácticamente nada, exceptuando el género, que vuelve a adquirir vierta importancia.
+
+PC5 le da mucha importancia a Kennedy y a Hague, sin embargo Blair es irrelevante. Lo cual es curioso porque es el líder del partido al que más votarían los encuestados. Europa, la economía nacional y el género también tienen cierta importancia.
+
+En PC6 el género tiene una importancia otra vez muy grande junto al conocimiento político, al igual que en el PC2.
+
+Uno que también puede ser interesante es PC7, ya que asocia un peso considerable a Hague, Blair, y Europe, además de que no olvida la Economía doméstica ni a Kennedy.
+
+PC8 y PC9 son los que menos varianza explican en el contexto de los datos, como veremos a continuación.
+
+La desviación estándar de cada componente es la siguiente:
+
+```{r}
+pca_result$sdev
+```
+
+Y con el siguiente comando obtenemos la varianza de cada desviación anterior:
+
+```{r}
+(VE <- pca_result$sdev^2)
+```
+
+Estos valores son obvios y no relevantes. Lo que necesitamos saber es qué porcentaje de varianza explica cada componente, para saber la importancia de cada uno. Para saberlo, dividimos la varianza de cada componente entre la varianza total.
+
+```{r}
+PVE <- VE / sum(VE)
+round(PVE, 2)
+```
+
+Por lo que tenemos que el primer componente es el que más relevancia tiene, pero no sobresale demasiado sobre el resto. El segundo es solamente un poco más relevante, y el resto son prácticamente iguales.
+
+Los componentes que le daban cierta importancia al género son PC2, PC3, PC4 y PC6, que juntos aglutinan el 45% de la muestra. Por lo tanto, quizás el género tiene importancia en la predicción del voto, y es algo que no habíamos observado antes de aplicar PCA.
+
+
+
+## 3. Machine Learning
+
+Una vez analizados los datos, ha llegado el momento de seleccionar un modelo de Machine Learning para el problema. Existe una herramienta llamada Caret que entrena los datos con varios algoritmos, arrojando unos resultados para cada algoritmo que ejecutamos. Esto nos permite comparar todos de manera rápida y poco costosa, y elegir el más conveniente.
+
+En primer lugar crearemos un clúster de 4 núcleos para acelerar el entrenamiento de los modelos de Machine Learning, ya que de no hacerlo llevaría demasiado tiempo. Para ello será necesario que carguemos la librería `doParallel`. Este clúster forma parte del paquete Caret.
+
+```{r}
+library(doParallel)
+cl <- makePSOCKcluster(4)
+registerDoParallel(cl)
+```
+
+Cargamos las librerías necesarias para Caret:
+
+```{r}
+library(caret)
+library(mlbench)
+```
+
+
+### 3.1 Preparación de los datos
+
+En primer lugar almacenamos los datos de BEPS en otra variable:
+
+```{r}
+Datos.Todo = BEPS
+```
+
+Ahora, creamos las variables que contendrán los datos y los nombres de las variables:
+
+```{r}
+# Variable de salida
+VarSalida = c("vote")
+
+# Variables de entrada
+VarsEntrada = setdiff(names(Datos.Todo), VarSalida)
+```
+
+Ahora dividos el espectro de datos en dos variables:
+* Uno contendrá el 80% de los datos, y será el conjunto de datos de Training (Datos.Train).
+* El otro contendrá a su vez el 20% de los datos, siendo el conjunto de Test (Datos.Test).
+
+El conjunto de training será usado para entrenar los modelos y validarlos, haciendo uso de la técnica llamada crosvalidación.
+El conjunto de test servirá para estimar lo buena que es la hipótesis final.
+
+La división del conjunto de datos en dos se realizará con la función `createDataPartition`.
+
+```{r}
+set.seed(1234)
+Datos.Particion <- createDataPartition(Datos.Todo[[VarSalida]],
+                               p=0.8,        #Genera un 80% para train, 20% para test
+                               list = FALSE, #Dame los resultados en una matriz
+                               times = 1)    #Genera solamente una partición 80/20
+
+Datos.Train <- Datos.Todo[Datos.Particion,]  # Genera una partición de datos de entrenamiento (con el 80% de los del ejemplo)
+Datos.Test <- Datos.Todo[-Datos.Particion,]  # Genera una partición de datos de test (con el 20% de los del ejemplo)
+```
+
+
+### 3.2 Entrenamiento y elección del algoritmo
+
+Vamos a realizar una primera ejecución de los datos con algunos de los algoritmos de Machine Learning que nos proporciona Caret.
+
+El entrenamiento se ejecuta con la función `train` del paquete Caret. En ella el parámetro `tuneLength` se ajustará a 6. El valor por defecto que utiliza Caret para este parámetro es 3, y son las veces que el algoritmo prueba un valor diferente para cada hiper-parámetro. De esta manera si, por ejemplo, tenemos un algoritmo con 2 hiper-parámetros, dicho algoritmo se ejecutará un total de 6^2 veces.
+
+Además del parámetro anterior, también se hará uso del método `trainControl`. Este permite controlar más cosas sobre la ejecución del algoritmo, como por ejemplo utilizar la crosvalidación anteriormente mencionada en lugar de `bootstrap` que utiliza Caret por defecto.
+La crosvalidación será de 20 pliegues con 6 repeticiones.
+
+
+#### 3.1.1 Linear Discriminant Analysis (lda)
+
+En primer lugar vamos a entrenar el conjunto de datos de entrenamiento con `lda`.
+
+```{r}
+lda.TrainCtrl <- trainControl(
+  # Crosvalidación de 20 pliegues con 6 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+system.time(
+  lda.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='lda', tuneLength=6, trControl=lda.TrainCtrl))
+```
+
+Visualizamos los resultados:
+
+```{r}
+lda.Crosv
+```
+
+En lugar de mirar el resultado en las columnas de Accuracy lo haremos mirando la columna de Kappa. Esto es así porque Accuracy asume que hay un 33% de casos de cada clase, y en realidad tenemos un reparto dispar de los votos, por lo que en ciertos casos podríamos tener un resultado no fiel.
+Kapa es el coeficiente de Cohen. Según algunos autores, un resultado de 0,75 es considerado excelente y pobre por debajo de 0.40.
+
+En este caso tenemos un 0.4447, por lo que podríamos considerarlo aceptable.
+Además, el tiempo de cálculo es bajo.
+
+En este algoritmo no tenemos hiper-parámetros a modificar, por lo que sólo se nos muestra un resultado.
+
+
+#### 3.1.2 Algoritmo CART de árboles de decisión de clasificación y regresión (rpart)
+
+Ahora probaremos con el algoritmo `rpart`:
+
+```{r}
+rpart.TrainCtrl <- trainControl(
+  # Crosvalidación de 20 pliegues con 6 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+system.time(
+  rpart.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='rpart', tuneLength=6, trControl=rpart.TrainCtrl))
+```
+
+Obtenemos:
+
+```{r}
+rpart.Crosv
+```
+
+El mejor resultado obtenido ha sido un 0.4114, que podría ser aceptable.
+Nuevamente el tiempo consumido es poco.
+
+En este caso si que se han probado distintos valores para un hiper-parámetro, que es `cp`. Éste es ajusta la cantidad de poda del árbol del algoritmo y la complejidad del árbol. Vemos que cuanto menor es dicho valor mejor resultado se obtiene, por lo que quizá reduciendo aún más la cifra se podría conseguir un resultado aún mejor.
+
+
+#### 3.1.3 Algoritmo de clustering (knn)
+
+Este algoritmo ha sido adaptado para hacer clasificación, y el tiempo obtenido con él es un poco mayor que con los dos algoritmos anteriores:
+
+```{r}
+knn.TrainCtrl <- trainControl(
+  # Crosvalidación de 20 pliegues con 6 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+system.time(
+  knn.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='knn', tuneLength=6, trControl=knn.TrainCtrl))
+```
+
+Y como podemos ver a continuación, el mayor valor de Kappa es 0.3659, con lo cual tenemos un resultado casi aceptable.
+
+```{r}
+knn.Crosv
+```
+
+En este caso se modifica el hiperparámetro k, que indica el número de vecinos. Si este valor es bajo no se obtiene un buen rendimiento, pero a partir de 9, el resultado es prácticamente el mismo. Quizá aumentando mucho más esa cifra podríamos ver un resultado mejor. Igualmente es el peor resultado obtenido hasta el momento, por lo que este algoritmo no parece el más adecuado para este problema.
+
+
+#### 3.1.4 Support Vector Machines (svmRadial)
+
+En este caso el tiempo ya llega a ser bastante más elevado que en los otros casos si no se utiliza el clúster. Si se utiliza la diferencia es mínima.
+
+```{r}
+svmRadial.TrainCtrl <- trainControl(
+  # Crosvalidación de 20 pliegues con 6 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+system.time(
+  svmRadial.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='svmRadial', tuneLength=6, trControl=svmRadial.TrainCtrl))
+```
+
+El resultado es bueno en comparación con los dos algoritmos anteriores, consiguiendo en el mejor caso 0.4507, lo cual vuelve a ser aceptable, por lo que este algoritmo podría ser candidato a ser usado.
+
+```{r}
+svmRadial.Crosv
+```
+
+Aquí se va modificando el parámetro 'K'. Dicho parámetro comienza con el valor 2, y se le diviendo y multiplicando por 2 cada vez que utilizamos dos nuevos valores. El mejor resultado es obtenido precisamente con el valor 2, y a partir de ahí se van empeorando los resultados. En este caso parece que no se podría mejorar mucho el resultado modificando este hiper-parámetro.
+
+
+#### 3.1.5 Random Forests (rf)
+
+Este es uno de los algoritmo de Machine Learning más usados en la actualidad por los buenos resultados que consigue en numerosos casos. Tiene por contra la desventaja de ser muy lento:
+
+```{r}
+rf.TrainCtrl <- trainControl(
+  # Crosvalidación de 20 pliegues con 6 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+system.time(
+  rf.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='rf', tuneLength=6, trControl=rf.TrainCtrl))
+```
+
+Y, en este caso, su rendimiento no es malo, consiguiendo la mejor cifra hasta ahora, 0.4559 en el mejor caso.
+
+```{r}
+rf.Crosv
+```
+
+Este resultado es obtenido cuando el hiper-parámetro 'mtry' tiene el valor 2. Conforme se va a aumentando este número va empeorando el resultado, por lo tanto, quizá disminuyendo aún más dicho número tenemos un mejor resultado.
+
+
+#### 3.1.6 Stochastic Gradient Boosting (gbm)
+
+```{r}
+gbm.TrainCtrl <- trainControl(
+  # Crosvalidación de 10 pliegues con 3 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+system.time(
+  gbm.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='gbm', tuneLength=6, trControl=gbm.TrainCtrl))
+```
+
+Este tiempo es menor que en consumido con Random Forests pero algo superior al consumido con Support Vector Machines.
+
+```{r}
+gbm.Crosv
+```
+
+El mejor valor obtenido en la columna Kappa es 0.4764, por lo que se sitúa como el mejor algoritmo hasta ahora.
+
+Dicho resultado ha sido obtenido con los siguientes valores en los dos hiper-parámetros que modifica caret:
+* interaction.depth = 1
+* n.trees = 150
+
+Al ser dos parámetros lo que se puede modificar se han realizado 6^2 (12) ejecuciones, y aunque en las últimas se nota una bajada de rendimiento en el resto hay resultados muy parejos. Si pudiéramos reduciríamos el valor del hiper-parámetro 'interaction.depth', pero es un valor entero, por lo que no es posible. Además, el valor del otro parámetro es 150, que es el más intermedio, por lo que tampoco deja entreveer a priori mucha mejoría.
+
+
+#### 3.1.7 Neural Networks (nnet)
+
+Le toca el turno a las famosas Redes Neuronales.
+
+```{r}
+nnet.TrainCtrl <- trainControl(
+  # Crosvalidación de 10 pliegues con 3 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+system.time(
+  nnet.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='nnet', tuneLength=6, trControl=nnet.TrainCtrl))
+```
+
+El tiempo que consumen es elevado también, pero llegados a este punto y después de observar que la mayoría de algoritmos consumen un elevado número de tiempo este aspecto pasa a ser irrelevante, ya que se priorizará la exactitud obtenida en cada caso.
+
+```{r}
+nnet.Crosv
+```
+
+Volvemos a tener 2 hiper-parámetros y 12 ejecuciones. El mejor resultado obtenido en la columna Kappa es 0.4464. Es de nuevo un buen resultado en comparación con otros. Ha sido obtenido con los valores 5 y 0.1 en sus hiper-parámetros. Tampoco tiene mucha mejoría por descubrir, porque cuando se va aumentando o disminuyendo el valor del primer hiper-parámetro ('size') el rendimiento disminuye, y el mejor resultado obtenido con el segundo hiper-parámetro ('decay') es el valor máximo que se ha utilizado, por lo que tampoco parece que pueda aumentarse.
+
+
+#### 3.1.8 Elección de un modelo
+
+Para elegir finalmente un modelo para nuestro caso de estudio, primero queremos volver a probar algunos algoritmos, pero esta vez con un mayor número de hiper-parámetros. Los algoritmos que han dado un buen resultado y parecen tener margen de mejora son `rpart` y `rf`.
+
+Los volvemos a ejecutar, pero en este caso con el parámetro 'tuneLength' valiendo 12, el doble:
+
+##### rpart
+
+```{r}
+rpart.TrainCtrl <- trainControl(
+  # Crosvalidación de 20 pliegues con 6 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+rpart.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='rpart', tuneLength=12, trControl=rpart.TrainCtrl)
+
+rpart.Crosv
+```
+
+En el caso de `rpart` el nuevo mejor resultado ha sido 0.4210, por lo que aunque hemos aumentado la cifra, no se acerca al caso de los mejores algoritmos.
+
+##### rf
+
+```{r}
+rf.TrainCtrl <- trainControl(
+  # Crosvalidación de 20 pliegues con 6 repeticiones
+  method = "repeatedcv",
+  number = 20,
+  repeats = 6)
+
+set.seed(1234)
+rf.Crosv <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='rf', tuneLength=12, trControl=rf.TrainCtrl)
+
+rf.Crosv
+```
+
+Al intentar ejecutarlo, Caret nos indica que el número máximo de valores para el hiper-parámetro de este algoritmo es 8, por lo que no se probarán 12 como dijimos en un primer momento.
+
+El mejor resultado ha sido obtenido con el mismo valor en el hiper-parámetro que antes, aún así el resultado es un poco mejor: 0.4562.
+
+
+A pesar de esa pequeña mejoría en el Random Forests, sigue sin ser el mejor modelo: Stochastic Gradient Boosting ha obtenido un 0.4764, que es más de 2 centésimas mejor que Random Forests. Además su Accuracy es también ligeramente mejor. Por lo tanto, Stochastic Gradient Boosting será el algoritmo elegido.
+
+
+### 3.3 Reentrenamiento del modelo elegido
+
+Una vez que hemos elegido el modelo, lo reentrenaremos sin utilizar crosvalidación, es decir, con la ténica por defecto que utiliza Caret.
+
+```{r}
+# design the parameter tuning grid
+grid <- expand.grid(interaction.depth=c(1), n.trees=c(150), shrinkage=c(0.1), n.minobsinnode=c(10))
+
+set.seed(1234)
+gbm.Boost <- train(Datos.Train[VarsEntrada],
+                               Datos.Train[[VarSalida]], 
+                               method='gbm', tuneGrid=grid)
+
+gbm.Boost
+```
+
+
+
+### 3.4 Capacidad final de predicción del voto
+
+Una vez hemos reentrenado el modelo, vamos a evaluarlo con el conjunto de datos de test.
+
+En primer lugar entrenamos el modelo con `train()` como hemos hecho hasta ahora, pero con el conjunto de datos de test (Datos.Test).
+
+```{r}
+# design the parameter tuning grid
+grid <- expand.grid(interaction.depth=c(1), n.trees=c(150), shrinkage=c(0.1), n.minobsinnode=c(10))
+
+set.seed(1234)
+gbm.Boost.Val <- train(Datos.Test[VarsEntrada],
+                               Datos.Test[[VarSalida]], 
+                               method='gbm', tuneGrid=grid)
+
+gbm.Boost.Val
+```
+
+El resultado es 0.4250, lo cual no es un mal resultado pero tampoco es muy bueno.
+
+Si utilizamos el método `confusionMatrix()` del paquete Caret podremos ver la capacidad de predicción de los votos de cada partido.
+
+```{r}
+confusionMatrix(gbm.Boost.Val)
+```
+
+El modelo ha sido capaz de predecir correctamente el 22.7% de los votos que ha recibido el partido conservador del 31.5% que obtuvo. Esto supone el 72% de sus votos. No es una cifra alta pero es buena.
+Para el partido Laborista ha predecido un 36.6% de votos de los 53.8% de los que debería haber predecido. Supone el 60%. Una cifra más baja que para el partido conservador.
+Finalmente para el partido Liberal solamente predice el 5.1% de los votos del 14.6% que debería haber predecido. Supone el 35%. Una cifra aún mas baja.
+
+En la matriz se ve claramente que el partido que menos ha podido ser predecido es el Liberal, ya que el 58% de sus votos se predijo que iban para el partido Laborista. Es más de la mitad de los votos, lo cual es una mala cifra. Esto puede haber ocurrido por el bajo número de encuestados que aseguraron que votarían a ese partido, siendo en la encuesta el menos votado. Quizá también el parecido de sus votantes en el Euroescepticismo, algo en lo que el partido Conservador es muy diferente a los demás, y ese podría ser el principal motivo de por qué ha sido el partido con el mayor número de votos bien predichos.
+Otro punto que puede haber afectado al partido Liberal es que su líder es el mejor aceptado entre el resto de votantes, por lo que tampoco tenemos esa polarización que ayuda en las predicciones.
+
+Finalmente, tenemos un 64.4% de los votos que se han predecido correctamente. No es una cifra muy elevada pero es considerable, ya que el número de preguntas de la encuesta no era alto y la muestra tampoco. Quizá aumentar esas ambas cifras hubiera supuesto un mejor resultado.
+
+
+Finalmente paramos el clúster creado anteriormente.
+
+```{r}
+stopCluster(cl)
+```

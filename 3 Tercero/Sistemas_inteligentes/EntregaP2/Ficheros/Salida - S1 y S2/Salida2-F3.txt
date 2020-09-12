@@ -1,0 +1,16 @@
+Dominio: IDENTIFICACION DE FRUTAS
+Objetivo: Fruta = Sandia
+Base de Hechos final:
+	Forma = Redonda
+	Color = Verde
+	Fruta = Sandia
+	Diametro = 11
+	ClaseFrutal = Emparrado
+	NSemillas = 2
+	TipoSemilla = Multiple
+	Superficie = 
+
+CAMINO HACIA EL OBJETIVO
+Como el atributo 'Forma' tiene el valor 'Redonda' introducido por la Base de Hechos, y el atributo 'Diametro' tiene el valor '11' introducido por la Base de Hechos, el SBR concluye que 'ClaseFrutal' tiene el valor 'Emparrado'
+Como el atributo 'ClaseFrutal' tiene el valor 'Emparrado', y el atributo 'Color' tiene el valor 'Verde' introducido por la Base de Hechos, el SBR concluye que 'Fruta' tiene el valor 'Sandia'
+El SBR ha concluido que 'Fruta' es 'Sandia'

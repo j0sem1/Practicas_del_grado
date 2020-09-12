@@ -1,0 +1,17 @@
+Dominio: IDENTIFICACION DE FRUTAS
+Objetivo: Fruta = Cereza
+Base de Hechos final:
+	Forma = Redonda
+	Color = Rojo
+	Fruta = Cereza
+	Diametro = 3
+	ClaseFrutal = Arbol
+	NSemillas = 1
+	TipoSemilla = Hueso
+	Superficie = 
+
+CAMINO HACIA EL OBJETIVO
+Como el atributo 'Forma' tiene el valor 'Redonda' introducido por la Base de Hechos, y el atributo 'Diametro' tiene el valor '3' introducido por la Base de Hechos, el SBR concluye que 'ClaseFrutal' tiene el valor 'Arbol'
+Como el atributo 'NSemillas' tiene el valor '1' introducido por la Base de Hechos, el SBR concluye que 'TipoSemilla' tiene el valor 'Hueso'
+Como el atributo 'ClaseFrutal' tiene el valor 'Arbol', y el atributo 'Color' tiene el valor 'Rojo' introducido por la Base de Hechos, y el atributo 'TipoSemilla' tiene el valor 'Hueso', el SBR concluye que 'Fruta' tiene el valor 'Cereza'
+El SBR ha concluido que 'Fruta' es 'Cereza'
