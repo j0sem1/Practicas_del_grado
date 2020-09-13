@@ -23,3 +23,6 @@ Proyecto más completo de los realizados durante la carrera. Desarrollo de un re
 ## Cuarto curso
 Mención de Computación.
 ### Aprendizaje computacional
+Ambas prácticas realizadas en R. La primera es un análisis de datos, iniciación al Big Data. En la segunda se diseñan redes neuronales para la resolución de un problema de clasificación de imágenes. Ambas formas de leer mejor las prácticas es con los .html.
+### IA para el desarrollo de juegos
+Videojuego desarrollado en Unity sobre el enfrentamiento de dos equipos con personajes de distintos tipos .Realizado en dos partes. En la primera se desarrollaron steerings de movimiento de los personajes utilizando técnicas de inteligencia artificial. En la segunda se programó el comportamiento y las fases o modos del videojuego. Proyecto realizado conjuntamente con Vladyslav Grechyshkin (https://github.com/vlad-gre/) y Nicolás Fuentes Turpín (nicofutur8).
