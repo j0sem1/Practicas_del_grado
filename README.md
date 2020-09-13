@@ -18,11 +18,17 @@ Programación de un gestor de peticiones HTTP en C. Configuración de servicios 
 ### Sistemas inteligentes
 La primera práctica es un algoritmo genético realizado en C++ que intenta resolver Sudokus utilizando una librería. La segunda es un sistema basado en reglas enteramente  programado por mi en C++.
 ### Tecnologías de desarrollo de software
-Proyecto más completo de los realizados durante la carrera. Desarrollo de un reproductor de vídeos de Youtube que utiliza Swing para la interfaz gráfica, una base de datos para almacenar los vídeos o los usuarios, y patrones de diseño, explicados en la memoria del trabajo. Proyecto realizado conjuntamente con Francisco Hita Ruiz.
+Proyecto más completo de los realizados durante la carrera junto al de IA para el desarrollo de juegos de cuarto. Desarrollo en Java de un reproductor de vídeos de Youtube que utiliza Swing para la interfaz gráfica, una base de datos para almacenar los vídeos o los usuarios, y patrones de diseño, explicados en la memoria del trabajo. Proyecto realizado conjuntamente con Francisco Hita Ruiz.
 
 ## Cuarto curso
 Mención de Computación.
 ### Aprendizaje computacional
 Ambas prácticas realizadas en R. La primera es un análisis de datos, iniciación al Big Data. En la segunda se diseñan redes neuronales para la resolución de un problema de clasificación de imágenes. Ambas formas de leer mejor las prácticas es con los .html.
 ### IA para el desarrollo de juegos
-Videojuego desarrollado en Unity sobre el enfrentamiento de dos equipos con personajes de distintos tipos .Realizado en dos partes. En la primera se desarrollaron steerings de movimiento de los personajes utilizando técnicas de inteligencia artificial. En la segunda se programó el comportamiento y las fases o modos del videojuego. Proyecto realizado conjuntamente con Vladyslav Grechyshkin (https://github.com/vlad-gre/) y Nicolás Fuentes Turpín (nicofutur8).
+Proyecto más completo de los realizados durante la carrera junto al de tecnologías de desarrollo de software de tercero. Videojuego desarrollado en Unity sobre el enfrentamiento de dos equipos con personajes de distintos tipos .Realizado en dos partes. En la primera se desarrollaron steerings de movimiento de los personajes utilizando técnicas de inteligencia artificial. En la segunda se programó el comportamiento y las fases o modos del videojuego. Proyecto realizado conjuntamente con Vladyslav Grechyshkin (https://github.com/vlad-gre/) y Nicolás Fuentes Turpín (nicofutur8).
+### Modelado de minihabitación con Blender
+Modelado en Blender de una habitación en pequeña escala. Enmarcado en la asignatura Fundamentos computacionales de los videojuegos de cuarto.
+### Visión artificial
+Scripts de Python que utilizan la librería OpenCV para la aplicación de técnicas de inteligencia artifical en el desarrollo de problemas con imágenes.
+### Trabajo fin de grado
+Memoria del trabajo fin de grado realizado sobre un visor virtual de la reconstrucción 3D del Castillejo de Monteagudo.
