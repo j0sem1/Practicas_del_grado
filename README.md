@@ -32,3 +32,4 @@ Modelado en Blender de una habitación en pequeña escala. Enmarcado en la asign
 Scripts de Python que utilizan la librería OpenCV para la aplicación de técnicas de inteligencia artifical en el desarrollo de problemas con imágenes.
 ### Trabajo fin de grado
 Memoria del trabajo fin de grado realizado sobre un visor virtual de la reconstrucción 3D del Castillejo de Monteagudo.
+En este enlace se pueden descargar las aplicaciones compiladas para probarlas: https://mega.nz/folder/Dd0BWIzR#OhznezoQqSczOyhTJXCPTw
